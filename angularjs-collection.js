@@ -10,15 +10,28 @@
 *
 * */
 
-var Collection = function Collection(nameCollection, modelDefault, objOption, callback) {
-  var that = this;
+//var Collection = function Collection(nameCollection, modelDefault, objOption, callback) {
+var Collection = function Collection(objOption) {
+  var that = this,
+      objOptionDefault = {
+        type: undefined,
+        default: undefined,
+        callback: undefined,
+        debug: false
+      };
 
-  that.opt = objOption || {
-    debug: false
-  };
-  that.nameCollection = nameCollection;
-  that.modelDefault = modelDefault;
-  that.callback = callback;
+  // Read Options
+  that.opt = {};
+  Object.keys(objOptionDefault).forEach(function (key) {
+    var value = objOption[key],
+        valueDefault = objOptionDefault[key];
+
+    that.opt[key] = value || valueDefault;
+  });
+
+  that.nameCollection = that.opt.type;
+  that.modelDefault = that.opt.default;
+  that.callback = that.opt.callback;
 
   that.checkDependencies();
   that.createMasterTable(function () {

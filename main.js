@@ -24,19 +24,36 @@ app.controller('AppCtrl', function () {
     ]
   };
 
-  window.peopel = new Collection('people', {
-    name: 'John',
-    age: '12',
-    address: {
-      line1: '93. Meridian place',
-      line2: 'London',
-      postCode: 'E14 9FF'
+//  window.peopel = new Collection('people', {
+//    name: 'John',
+//    age: '12',
+//    address: {
+//      line1: '93. Meridian place',
+//      line2: 'London',
+//      postCode: 'E14 9FF'
+//    },
+//    listCar: 'collectionType_car',
+//    listKid: 'collectionType_kid'
+//  }, {
+//    debug: true
+//  }, addModelToPeople);
+
+  window.peopel = new Collection({
+    type: 'people',
+    default: {
+      name: 'John',
+      age: '12',
+      address: {
+        line1: '93. Meridian place',
+        line2: 'London',
+        postCode: 'E14 9FF'
+      },
+      listCar: 'collectionType_car',
+      listKid: 'collectionType_kid'
     },
-    listCar: 'collectionType_car',
-    listKid: 'collectionType_kid'
-  }, {
+    callback: addModelToPeople,
     debug: true
-  }, addModelToPeople);
+  });
 
   function addModelToPeople() {
     window.peopel.add({
