@@ -222,39 +222,21 @@ Collection.prototype.add = function (model, callback) {
       keyDimension = that.nameCollection,
       listSql = [],
       listCmd = [],
-      JSONrep = {},
-      JSONrepNew = {};
-  that.JSONrepNew = {
-    fake: true
-  };
+      JSONtemp = {};
 
-  // Start checking model on root dimension
-//  var listSqlInsertAllDimension = checkRecursively(model, that.modelDefault, keyDimension, JSONrep, JSONrepNew);
-//  var listCmdAllDimension = checkRecursively(model, that.modelDefault, keyDimension, JSONrep, JSONrepNew);
-  var listCmdAllDimension = checkRecursively(model, that.modelDefault, keyDimension, JSONrep, {JSONCurrentDim: that.JSONrepNew});
+  var listCmdAllDimension = checkRecursively(model, that.modelDefault, keyDimension, {JSONCurrentDim: JSONtemp});
   that.log('temp/add: listCmdAllDimension', listCmdAllDimension);
-
-  // Add all dimentions of Collection to Tables
-//  that.executeSqlQueryList(listSqlInsertAllDimension, function () {
-//    that.log('temp/add: Collections dimensions(key-value pairs) are inserted into relevant tables.');
-//
-////    that.JSON.push(JSONrep);
-//
-//    if (typeof callback === "function") {
-//      callback();
-//    }
-//  });
 
   that.executeCommandList(listCmdAllDimension, function () {
     that.log('temp/add: Collections dimensions(key-value pairs) are inserted into relevant tables.');
 
-    that.JSON.push(JSONrepNew);
+    that.JSON.push(JSONtemp);
     if (typeof callback === "function") {
       callback();
     }
   });
 
-  function checkRecursively(modelTargetDim, modelDefaultTargetDim, keyDimension, JSONrep, linkToPrevDimJSONKey) {
+  function checkRecursively(modelTargetDim, modelDefaultTargetDim, keyDimension, linkToPrevDimJSONKey) {
     var JSONCurrentDim = {};
 
     // check whether current dimension is undefined
@@ -283,9 +265,8 @@ Collection.prototype.add = function (model, callback) {
 
       switch (type) {
         case '[object Object]':
-          JSONrep[key] = 'coming..';
           JSONCurrentDim[key] = 'loading..';
-          checkRecursively(value, modelDefaultTargetDim[key], keyDimension+'_'+key, JSONrep[key], {
+          checkRecursively(value, modelDefaultTargetDim[key], keyDimension+'_'+key, {
             JSONCurrentDim: JSONCurrentDim,
             key: key
           });
@@ -293,19 +274,16 @@ Collection.prototype.add = function (model, callback) {
           listValue.push('nameTable(@)c_'+keyDimension+'_'+key);
           break;
         case '[object Array]':
-          JSONrep[key] = 'coming..';
           JSONCurrentDim[key] = 'loading..';
           listKey.push(key);
           listValue.push(modelDefaultTargetDim[key].split('_').join('(@)'));
           break;
         case '[object Number]':
-          JSONrep[key] = value+'';
           JSONCurrentDim[key] = value+'';
           listKey.push(key);
           listValue.push(value+'');
           break;
         case '[object String]':
-          JSONrep[key] = value+'';
           JSONCurrentDim[key] = value+'';
           listKey.push(key);
           listValue.push(value);
@@ -329,13 +307,11 @@ Collection.prototype.add = function (model, callback) {
           JSONPrevDim[key] = JSONCurrentDim;
         } else {
           JSONCurrentDim.id = results.insertId;
-          JSONrepNew = JSONCurrentDim;
+          JSONtemp = JSONCurrentDim;
         }
       }
     });
 
-
-//    return listSql;
     return listCmd;
   }
 
