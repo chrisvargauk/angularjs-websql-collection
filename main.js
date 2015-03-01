@@ -90,7 +90,8 @@ app.controller('AppCtrl', function () {
 
   window.peopel = new Collection({
     type: 'people',
-    debug: true
+    debug: true,
+    filter: 'id < 2'
   });
 
 //  window.listMonth = new Collection('month', 'July', {debug: true});

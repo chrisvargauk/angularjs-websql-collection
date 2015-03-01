@@ -15,6 +15,7 @@ var Collection = function Collection(objOption) {
   var that = this,
       objOptionDefault = {
         type: undefined,
+        filter: undefined,
         default: undefined,
         callback: undefined,
         debug: false
@@ -53,7 +54,7 @@ var Collection = function Collection(objOption) {
       });
     });
   } else {
-    that.JSON = that.loadCollectionFromWebsql('c_'+that.nameCollection);
+    that.JSON = that.loadCollectionFromWebsql('c_'+that.nameCollection, that.opt.filter);
   }
 };
 
