@@ -221,24 +221,42 @@ Collection.prototype.add = function (model, callback) {
   var that = this,
       keyDimension = that.nameCollection,
       listSql = [],
-      JSONrep = {};
+      listCmd = [],
+      JSONrep = {},
+      JSONrepNew = {};
+  that.JSONrepNew = {
+    fake: true
+  };
 
   // Start checking model on root dimension
-  var listSqlInsertAllDimension = checkRecursively(model, that.modelDefault, keyDimension, JSONrep);
-  that.log('temp/add: listSql', listSqlInsertAllDimension);
+//  var listSqlInsertAllDimension = checkRecursively(model, that.modelDefault, keyDimension, JSONrep, JSONrepNew);
+//  var listCmdAllDimension = checkRecursively(model, that.modelDefault, keyDimension, JSONrep, JSONrepNew);
+  var listCmdAllDimension = checkRecursively(model, that.modelDefault, keyDimension, JSONrep, {JSONCurrentDim: that.JSONrepNew});
+  that.log('temp/add: listCmdAllDimension', listCmdAllDimension);
 
   // Add all dimentions of Collection to Tables
-  that.executeSqlQueryList(listSqlInsertAllDimension, function () {
+//  that.executeSqlQueryList(listSqlInsertAllDimension, function () {
+//    that.log('temp/add: Collections dimensions(key-value pairs) are inserted into relevant tables.');
+//
+////    that.JSON.push(JSONrep);
+//
+//    if (typeof callback === "function") {
+//      callback();
+//    }
+//  });
+
+  that.executeCommandList(listCmdAllDimension, function () {
     that.log('temp/add: Collections dimensions(key-value pairs) are inserted into relevant tables.');
 
-    that.JSON.push(JSONrep);
-
+    that.JSON.push(JSONrepNew);
     if (typeof callback === "function") {
       callback();
     }
   });
 
-  function checkRecursively(modelTargetDim, modelDefaultTargetDim, keyDimension, JSONrep) {
+  function checkRecursively(modelTargetDim, modelDefaultTargetDim, keyDimension, JSONrep, linkToPrevDimJSONKey) {
+    var JSONCurrentDim = {};
+
     // check whether current dimension is undefined
     if (typeof modelTargetDim === 'undefined') {
       throw 'Collection.add: modelTargetDim is undefined.';
@@ -266,22 +284,29 @@ Collection.prototype.add = function (model, callback) {
       switch (type) {
         case '[object Object]':
           JSONrep[key] = 'coming..';
-          checkRecursively(value, modelDefaultTargetDim[key], keyDimension+'_'+key, JSONrep[key]);
+          JSONCurrentDim[key] = 'loading..';
+          checkRecursively(value, modelDefaultTargetDim[key], keyDimension+'_'+key, JSONrep[key], {
+            JSONCurrentDim: JSONCurrentDim,
+            key: key
+          });
           listKey.push(key);
           listValue.push('nameTable(@)c_'+keyDimension+'_'+key);
           break;
         case '[object Array]':
           JSONrep[key] = 'coming..';
+          JSONCurrentDim[key] = 'loading..';
           listKey.push(key);
           listValue.push(modelDefaultTargetDim[key].split('_').join('(@)'));
           break;
         case '[object Number]':
           JSONrep[key] = value+'';
+          JSONCurrentDim[key] = value+'';
           listKey.push(key);
           listValue.push(value+'');
           break;
         case '[object String]':
           JSONrep[key] = value+'';
+          JSONCurrentDim[key] = value+'';
           listKey.push(key);
           listValue.push(value);
           break;
@@ -291,11 +316,28 @@ Collection.prototype.add = function (model, callback) {
     sqlInsert += ' (' + listKey.join(',') + ') VALUES ("' + listValue.join('","') + '");';
     that.log('temp/add: sqlInsert', sqlInsert);
     listSql.push(sqlInsert);
+    listCmd.push({
+      sql: sqlInsert,
+      callback: function (results) {
+        // Add current dim obj to source in prev dim obj
+        var key = linkToPrevDimJSONKey.key,
+            JSONPrevDim = linkToPrevDimJSONKey.JSONCurrentDim;
 
-    return listSql;
+        // if key is not defined than that is root
+        if (!that.isUndefined(key)) {
+          JSONCurrentDim.id = results.insertId;
+          JSONPrevDim[key] = JSONCurrentDim;
+        } else {
+          JSONCurrentDim.id = results.insertId;
+          JSONrepNew = JSONCurrentDim;
+        }
+      }
+    });
+
+
+//    return listSql;
+    return listCmd;
   }
-
-  // call callback when done
 
   function compareObj(model, modelDefault) {
     var listKeyModel = Object.keys(model),
@@ -309,14 +351,6 @@ Collection.prototype.add = function (model, callback) {
       throw 'Collection.add: Model to be added is inconsistent with default Model. New key(s) found: ' + listKeyModelDiff.join(',');
     }
   }
-};
-
-Collection.prototype.getById = function (id) {
-
-};
-
-Collection.prototype.getByQuery = function (sql) {
-
 };
 
 Collection.prototype.log = function (msg, obj) {
@@ -381,7 +415,6 @@ Collection.prototype.deleteWebSQL = function (nameCollection, callback) {
     that.crawler(defaultModel, undefined, undefined, function (obj, keyDimension) {
       websql.deleteTable('c_'+keyDimension, function () {
         websql.run("DELETE FROM 'master' WHERE nameCollection='" + nameCollection + "';", undefined, callback);
-//        websql.deleteEntry('master', nameCollection, callback);
       });
     }, nameCollection);
   });
@@ -514,20 +547,20 @@ Collection.prototype.executeCommandList = function (listCmd, callback) {
   }
 
   listCmd.forEach(function (cmd) {
-    websql.run(cmd.sql, undefined, function () {
-      if (that.isUndefined(cmd.callback)) {
-        cmd.callback();
+    websql.run(cmd.sql, undefined, function (results) {
+      if (!that.isUndefined(cmd.callback)) {
+        cmd.callback(results);
       }
 
       ctr += 1;
       if (ctr === listCmd.length && typeof callback === "function") {
-        callback();
+        callback(results);
       }
     });
   });
 
   // If there was no command provided call the callback anyways
-  if (listCmd.legth === 0 && typeof callback === "function") {
+  if (listCmd.length === 0 && typeof callback === "function") {
     callback();
   }
 };

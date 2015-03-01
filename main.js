@@ -145,7 +145,7 @@ app.controller('AppCtrl', function () {
         listCar: 'collectionType_car',
         listKid: 'collectionType_kid'
       },
-      filter: 'id < 4',
+//      filter: 'id < 4',
       callback: addModelToPeople,
       debug: true
     });
