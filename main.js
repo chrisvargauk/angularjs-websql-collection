@@ -1,7 +1,7 @@
 var app = angular.module('app', []);
 
 // Done: break up the test to scenarios
-// Todo: Create 'car' and and 'kid' collection types, check for errors if not done yet
+// Done: Create 'car' and and 'kid' collection types, check for errors if not done yet
 // Todo: link up other collections in collections. Pass along the id
 // Todo: collection.empty, collection.deleteTables, collection.update
 // Todo: Sync JSON
@@ -12,7 +12,7 @@ app.controller('AppCtrl', function () {
 //  createNewCollection();
 //  createNewCollectionThenAdd();
 //  createNewCollectionLoadFromDB();
-//  createNewCollWithOtherCollectionsInIt();
+  createNewCollWithOtherCollectionsInIt();
 //  runCrawler();
 //  emptyCollectionInstance();
 //  emptyCollectionWithoutInstance();
@@ -132,44 +132,50 @@ app.controller('AppCtrl', function () {
       debug: true
     });
 
-//    var modelBlueprint = {
-//      name: 'John',
-//      age: 12,
-//      address: {
-//        line1: '93. Meridian place',
-//        line2: 'London',
-//        postCode: 'E14 9FF'
-//      },
-//      listCar: ['audi', 'BMW', 'Golf'],
-//      listKid: [
-//        {
-//          name: 'Melissa',
-//          age: 6
-//        },
-//        {
-//          name: 'Jeff',
-//          age: 5
-//        }
-//      ]
-//    };
-//
-//    window.peopel = new Collection({
-//      type: 'people',
-//      default: {
-//        name: 'John',
-//        age: '12',
-//        address: {
-//          line1: '93. Meridian place',
-//          line2: 'London',
-//          postCode: 'E14 9FF'
-//        },
-//        listCar: 'collectionType_car',
-//        listKid: 'collectionType_kid'
-//      },
-//      filter: 'id < 4',
-//      callback: getModelFromPeople,
-//      debug: true
-//    });
+    window.peopel = new Collection({
+      type: 'people',
+      default: {
+        name: 'John',
+        age: '12',
+        address: {
+          line1: '93. Meridian place',
+          line2: 'London',
+          postCode: 'E14 9FF'
+        },
+        listCar: 'collectionType_car',
+        listKid: 'collectionType_kid'
+      },
+      filter: 'id < 4',
+      callback: addModelToPeople,
+      debug: true
+    });
+
+    function addModelToPeople() {
+      window.peopel.add({
+        name: 'John',
+        age: 12,
+        address: {
+          line1: '93. Meridian place',
+          line2: 'London',
+          postCode: 'E14 9FF'
+        },
+        listCar: ['audi', 'BMW', 'Golf'],
+        listKid: [
+          {
+            name: 'Melissa',
+            age: 6
+          },
+          {
+            name: 'Jeff',
+            age: 5
+          }
+        ]
+      }, callback);
+    }
+
+    function callback() {
+      console.log('Done :)');
+    }
   }
 
   function runCrawler () {

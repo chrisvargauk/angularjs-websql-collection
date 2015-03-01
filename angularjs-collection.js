@@ -217,38 +217,28 @@ Collection.prototype.addCollToMasterTable = function(nameCollection, modelDefaul
   });
 };
 
-Collection.prototype.executeSqlQueryList = function (listSql, callback) {
-  var ctr = 0;
-
-  listSql.forEach(function (sql) {
-    websql.run(sql, undefined, function () {
-      ctr += 1;
-      if (ctr === listSql.length && typeof callback === "function") {
-        callback();
-      }
-    });
-  });
-};
-
 Collection.prototype.add = function (model, callback) {
   var that = this,
       keyDimension = that.nameCollection,
-      listSql = [];
+      listSql = [],
+      JSONrep = {};
 
   // Start checking model on root dimension
-  var listSqlInsertAllDimension = checkRecursively(model, that.modelDefault, keyDimension);
+  var listSqlInsertAllDimension = checkRecursively(model, that.modelDefault, keyDimension, JSONrep);
   that.log('temp/add: listSql', listSqlInsertAllDimension);
 
   // Add all dimentions of Collection to Tables
   that.executeSqlQueryList(listSqlInsertAllDimension, function () {
     that.log('temp/add: Collections dimensions(key-value pairs) are inserted into relevant tables.');
 
+    that.JSON.push(JSONrep);
+
     if (typeof callback === "function") {
       callback();
     }
   });
 
-  function checkRecursively(modelTargetDim, modelDefaultTargetDim, keyDimension) {
+  function checkRecursively(modelTargetDim, modelDefaultTargetDim, keyDimension, JSONrep) {
     // check whether current dimension is undefined
     if (typeof modelTargetDim === 'undefined') {
       throw 'Collection.add: modelTargetDim is undefined.';
@@ -275,19 +265,23 @@ Collection.prototype.add = function (model, callback) {
 
       switch (type) {
         case '[object Object]':
-          checkRecursively(value, modelDefaultTargetDim[key], keyDimension+'_'+key);
+          JSONrep[key] = 'coming..';
+          checkRecursively(value, modelDefaultTargetDim[key], keyDimension+'_'+key, JSONrep[key]);
           listKey.push(key);
           listValue.push('nameTable(@)c_'+keyDimension+'_'+key);
           break;
         case '[object Array]':
+          JSONrep[key] = 'coming..';
           listKey.push(key);
           listValue.push(modelDefaultTargetDim[key].split('_').join('(@)'));
           break;
         case '[object Number]':
+          JSONrep[key] = value+'';
           listKey.push(key);
-          listValue.push(value + '');
+          listValue.push(value+'');
           break;
         case '[object String]':
+          JSONrep[key] = value+'';
           listKey.push(key);
           listValue.push(value);
           break;
@@ -485,5 +479,55 @@ Collection.prototype.crawler = function (obj, iterator, filter, iteratorDimEnd, 
 
   if (!that.isUndefined(iteratorDimEnd)) {
     iteratorDimEnd(obj, keyDimension);
+  }
+};
+
+Collection.prototype.executeSqlQueryList = function (listSql, callback) {
+  var that = this,
+      ctr = 0;
+
+  if (that.isUndefined(listSql)) {
+    throw "Collection.executeSqlQueryList(): listSql is required.";
+  }
+
+  listSql.forEach(function (sql) {
+    websql.run(sql, undefined, function () {
+      ctr += 1;
+      if (ctr === listSql.length && typeof callback === "function") {
+        callback();
+      }
+    });
+  });
+
+  // If there was no sql provided call the callback anyways
+  if (listSql.legth === 0 && typeof callback === "function") {
+    callback();
+  }
+};
+
+Collection.prototype.executeCommandList = function (listCmd, callback) {
+  var that = this,
+      ctr = 0;
+
+  if (that.isUndefined(listCmd)) {
+    throw "Collection.executeSqlQueryList(): listSql is required.";
+  }
+
+  listCmd.forEach(function (cmd) {
+    websql.run(cmd.sql, undefined, function () {
+      if (that.isUndefined(cmd.callback)) {
+        cmd.callback();
+      }
+
+      ctr += 1;
+      if (ctr === listCmd.length && typeof callback === "function") {
+        callback();
+      }
+    });
+  });
+
+  // If there was no command provided call the callback anyways
+  if (listCmd.legth === 0 && typeof callback === "function") {
+    callback();
   }
 };
