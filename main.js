@@ -16,6 +16,8 @@ app.controller('AppCtrl', function () {
 //  runCrawler();
 //  emptyCollectionInstance();
 //  emptyCollectionWithoutInstance();
+//  deleteCollectionInstanceFromDB();
+//  deleteCollectionWithoutInstanceFromDB();
 
   function createNewCollection() {
     var modelBlueprint = {
@@ -212,5 +214,59 @@ app.controller('AppCtrl', function () {
 
   function emptyCollectionWithoutInstance() {
     Collection.prototype.emptyWebSQL('people');
+  }
+
+  function deleteCollectionInstanceFromDB() {
+    window.peopel = new Collection({
+      type: 'people',
+      default: {
+        name: 'John',
+        age: '12',
+        address: {
+          line1: '93. Meridian place',
+          line2: 'London',
+          postCode: 'E14 9FF'
+        },
+        listCar: 'collectionType_car',
+        listKid: 'collectionType_kid'
+      },
+      filter: 'id < 4',
+      callback: callback,
+      debug: true
+    });
+
+    // Delete it after 5s when it is ready
+    function callback() {
+      setTimeout(function (){
+        window.peopel.deleteWebSQL();
+      }, 5000);
+    }
+  }
+
+  function deleteCollectionWithoutInstanceFromDB() {
+    window.peopel = new Collection({
+      type: 'people',
+      default: {
+        name: 'John',
+        age: '12',
+        address: {
+          line1: '93. Meridian place',
+          line2: 'London',
+          postCode: 'E14 9FF'
+        },
+        listCar: 'collectionType_car',
+        listKid: 'collectionType_kid'
+      },
+      filter: 'id < 4',
+      callback: callback,
+      debug: true
+    });
+
+    // Delete it after 5s when it is ready
+    function callback() {
+      setTimeout(function (){
+        Collection.prototype.deleteWebSQL('people');
+      }, 5000);
+    }
   }
 });

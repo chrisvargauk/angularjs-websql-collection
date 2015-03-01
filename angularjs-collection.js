@@ -364,6 +364,35 @@ Collection.prototype.emptyWebSQL = function (nameCollection, callback) {
   });
 };
 
+// Delete All related tables to given collection in WebSQL.
+Collection.prototype.deleteWebSQL = function (nameCollection, callback) {
+  var that = this;
+
+  nameCollection = nameCollection || that.nameCollection;
+
+  if (that.isUndefined(nameCollection)) {
+    throw "Collection.deleteWebSQL(): nameCollection is required.";
+  }
+
+  that.ifNOTInDB('master', "nameCollection='"+nameCollection+"'", function() {
+    throw 'Collection.deleteWebSQL: Collection "'+nameCollection+'" is NOT in master table.';
+  });
+
+  that.ifInDB('master', "nameCollection='"+nameCollection+"'", function(ctr, listItem) {
+    var item = listItem[0],
+      defaultModel = JSON.parse(item.defaultModel);
+
+    console.log('defaultModel: ', defaultModel);
+
+    that.crawler(defaultModel, undefined, undefined, function (obj, keyDimension) {
+      websql.deleteTable('c_'+keyDimension, function () {
+        websql.run("DELETE FROM 'master' WHERE nameCollection='" + nameCollection + "';", undefined, callback);
+//        websql.deleteEntry('master', nameCollection, callback);
+      });
+    }, nameCollection);
+  });
+};
+
 // Util Methods
 
 Collection.prototype.isUndefined = function (item) {
