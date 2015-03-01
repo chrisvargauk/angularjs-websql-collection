@@ -209,6 +209,10 @@ Collection.prototype.addCollToMasterTable = function(nameCollection, modelDefaul
     // If collection is not added to Master table yet
     if (!ctrRow) {
       websql.run(sqlSaveModelDefault, undefined, callback);
+    } else {
+      if(that.isUndefined()) {
+        callback();
+      }
     }
   });
 };
@@ -334,12 +338,16 @@ Collection.prototype.log = function (msg, obj) {
 };
 
 // Empty All related tables to given collection in WebSQL.
-Collection.prototype.emptyWebSQL = function (nameCollection) {
+Collection.prototype.emptyWebSQL = function (nameCollection, callback) {
   var that = this;
 
   if (that.isUndefined(nameCollection)) {
     throw "Collection.emptyWebSQL(): nameCollection is required.";
   }
+
+  that.ifNOTInDB('master', "nameCollection='"+nameCollection+"'", function() {
+    throw 'Collection.emptyWebSQL: Collection "'+nameCollection+'" is NOT in master table.';
+  });
 
   that.ifInDB('master', "nameCollection='"+nameCollection+"'", function(ctr, listItem) {
     var item = listItem[0],
@@ -347,11 +355,14 @@ Collection.prototype.emptyWebSQL = function (nameCollection) {
 
     console.log('defaultModel: ', defaultModel);
 
-    that.crawler(defaultModel, function (value, key) {
-      console.log('Iterator : ['+key+'] ', value);
-    });
+    that.crawler(defaultModel, undefined, undefined, function (obj, keyDimension) {
+      console.log('Iterator : ['+keyDimension+'] ', obj);
+      websql.emptyTable('c_'+keyDimension, callback);
+    }, nameCollection);
   });
 };
+
+// Util Methods
 
 Collection.prototype.isUndefined = function (item) {
   return typeof item === 'undefined';
@@ -420,22 +431,28 @@ Collection.prototype.ctrEntry = function (nameTable, sqlFilter, callback) {
   });
 };
 
-Collection.prototype.crawler = function (obj, iterator, filter) {
+Collection.prototype.crawler = function (obj, iterator, filter, iteratorDimEnd, keyDimension) {
   var that = this;
 
   Object.keys(obj).forEach(function (key) {
     var value = obj[key];
 
-    iterator(value, key);
+    if (!that.isUndefined(iterator)) {
+      iterator(value, key, keyDimension+'_'+key);
+    }
 
     if (typeof value === 'object') {
       if(that.isUndefined(filter)) {
-        that.crawler(value, iterator, filter);
+        that.crawler(value, iterator, filter, iteratorDimEnd, keyDimension+'_'+key);
       } else {
         if (filter(value, key)) {
-          that.crawler(value, iterator, filter);
+          that.crawler(value, iterator, filter, iteratorDimEnd, keyDimension+'_'+key);
         }
       }
     }
   });
+
+  if (!that.isUndefined(iteratorDimEnd)) {
+    iteratorDimEnd(obj, keyDimension);
+  }
 };

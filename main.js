@@ -10,9 +10,9 @@ app.controller('AppCtrl', function () {
   console.log('Controller loaded');
 
 //  createNewCollection();
-//  createNewCollectionThenAdd();
+  createNewCollectionThenAdd();
 //  createNewCollectionLoadFromDB();
-  createNewCollWithOtherCollectionsInIt();
+//  createNewCollWithOtherCollectionsInIt();
 //  runCrawler();
 
   function createNewCollection() {
@@ -51,9 +51,13 @@ app.controller('AppCtrl', function () {
         listKid: 'collectionType_kid'
       },
       filter: 'id < 4',
-      callback: getModelFromPeople,
+      callback: callback,
       debug: true
     });
+
+    function callback() {
+      console.log('Done :)');
+    }
   }
 
   function createNewCollectionThenAdd() {
@@ -71,7 +75,7 @@ app.controller('AppCtrl', function () {
         listKid: 'collectionType_kid'
       },
       filter: 'id < 4',
-      callback: getModelFromPeople,
+      callback: addModelToPeople,
       debug: true
     });
 
