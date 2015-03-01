@@ -341,6 +341,8 @@ Collection.prototype.log = function (msg, obj) {
 Collection.prototype.emptyWebSQL = function (nameCollection, callback) {
   var that = this;
 
+  nameCollection = nameCollection || that.nameCollection;
+
   if (that.isUndefined(nameCollection)) {
     throw "Collection.emptyWebSQL(): nameCollection is required.";
   }

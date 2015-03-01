@@ -10,10 +10,12 @@ app.controller('AppCtrl', function () {
   console.log('Controller loaded');
 
 //  createNewCollection();
-  createNewCollectionThenAdd();
+//  createNewCollectionThenAdd();
 //  createNewCollectionLoadFromDB();
 //  createNewCollWithOtherCollectionsInIt();
 //  runCrawler();
+//  emptyCollectionInstance();
+//  emptyCollectionWithoutInstance();
 
   function createNewCollection() {
     var modelBlueprint = {
@@ -196,5 +198,19 @@ app.controller('AppCtrl', function () {
       // Crawl deeper only if value is Object not Array
       return Object.prototype.toString.call(value) === '[Object Object]';
     });
+  }
+
+  function emptyCollectionInstance() {
+    window.peopel = new Collection({
+      type: 'people',
+      debug: true,
+      callback: function () {
+        window.peopel.emptyWebSQL();
+      }
+    });
+  }
+
+  function emptyCollectionWithoutInstance() {
+    Collection.prototype.emptyWebSQL('people');
   }
 });
