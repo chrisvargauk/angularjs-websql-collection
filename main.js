@@ -36,9 +36,9 @@ app.controller('AppCtrl', function () {
     listKid: 'collectionType_kid'
   }, {
     debug: true
-  }, runIfPeopleReady);
+  }, addModelToPeople);
 
-  function runIfPeopleReady() {
+  function addModelToPeople() {
     window.peopel.add({
       name: 'John',
       age: 12,
@@ -58,8 +58,15 @@ app.controller('AppCtrl', function () {
           age: 5
         }
       ]
-    });
-  };
+    }, getModelFromPeople);
+  }
+
+  function getModelFromPeople () {
+    console.log('hehe :)');
+
+//    window.peopel.getById(1);
+//    window.peopel.getByQuery();
+  }
 
 //  window.listMonth = new Collection('month', 'July', {debug: true});
 });

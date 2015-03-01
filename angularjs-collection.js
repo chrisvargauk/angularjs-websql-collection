@@ -135,9 +135,21 @@ Collection.prototype.executeSqlQueryList = function (listSql, callback) {
 
 Collection.prototype.add = function (model, callback) {
   var that = this,
-      keyDimension = keyDimension || that.nameCollection;
+      keyDimension = that.nameCollection,
+      listSql = [];
 
-  checkRecursively(model, that.modelDefault, that.nameCollection);
+  // Start checking model on root dimension
+  var listSqlInsertAllDimension = checkRecursively(model, that.modelDefault, keyDimension);
+  that.log('temp/add: listSql', listSqlInsertAllDimension);
+
+  // Add all dimentions of Collection to Tables
+  that.executeSqlQueryList(listSqlInsertAllDimension, function () {
+    that.log('temp/add: Collections dimensions(key-value pairs) are inserted into relevant tables.');
+
+    if (typeof callback === "function") {
+      callback();
+    }
+  });
 
   function checkRecursively(modelTargetDim, modelDefaultTargetDim, keyDimension) {
     // check whether current dimension is undefined
@@ -154,7 +166,7 @@ Collection.prototype.add = function (model, callback) {
     compareObj(modelTargetDim, modelDefaultTargetDim);
 
     // Add key value pairs by dimensions/tables
-    var sqlInsert = 'INSERT INTO "c_' + that.nameCollection + '"',
+    var sqlInsert = 'INSERT INTO "c_' + keyDimension + '"',
       listKey = [],
       listValue = [];
 
@@ -185,9 +197,12 @@ Collection.prototype.add = function (model, callback) {
       }
 
     });
-    sqlInsert += ' (' + listKey.join(',') + ') VALUE ("' + listValue.join('","') + '");';
+    sqlInsert += ' (' + listKey.join(',') + ') VALUES ("' + listValue.join('","') + '");';
     that.log('temp/add: sqlInsert', sqlInsert);
-  };
+    listSql.push(sqlInsert);
+
+    return listSql;
+  }
 
   // call callback when done
 
@@ -203,6 +218,14 @@ Collection.prototype.add = function (model, callback) {
       throw 'Collection.add: Model to be added is inconsistent with default Model. New key(s) found: ' + listKeyModelDiff.join(',');
     }
   }
+};
+
+Collection.prototype.getById = function (id) {
+
+};
+
+Collection.prototype.getByQuery = function (sql) {
+
 };
 
 Collection.prototype.log = function (msg, obj) {
