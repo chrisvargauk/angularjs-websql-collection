@@ -1,63 +1,21 @@
 var app = angular.module('app', []);
 
+// Done: break up the test to scenarios
+// Todo: Create 'car' and and 'kid' collection types, check for errors if not done yet
+// Todo: link up other collections in collections. Pass along the id
+// Todo: collection.empty, collection.deleteTables, collection.update
+// Todo: Sync JSON
+
 app.controller('AppCtrl', function () {
   console.log('Controller loaded');
 
-  var modelBlueprint = {
-    name: 'John',
-    age: 12,
-    address: {
-      line1: '93. Meridian place',
-      line2: 'London',
-      postCode: 'E14 9FF'
-    },
-    listCar: ['audi', 'BMW', 'Golf'],
-    listKid: [
-      {
-        name: 'Melissa',
-        age: 6
-      },
-      {
-        name: 'Jeff',
-        age: 5
-      }
-    ]
-  };
+//  createNewCollection();
+//  createNewCollectionThenAdd();
+//  createNewCollectionLoadFromDB();
+  createNewCollWithOtherCollectionsInIt();
 
-//  window.peopel = new Collection('people', {
-//    name: 'John',
-//    age: '12',
-//    address: {
-//      line1: '93. Meridian place',
-//      line2: 'London',
-//      postCode: 'E14 9FF'
-//    },
-//    listCar: 'collectionType_car',
-//    listKid: 'collectionType_kid'
-//  }, {
-//    debug: true
-//  }, addModelToPeople);
-
-  /*
-  window.peopel = new Collection({
-    type: 'people',
-    default: {
-      name: 'John',
-      age: '12',
-      address: {
-        line1: '93. Meridian place',
-        line2: 'London',
-        postCode: 'E14 9FF'
-      },
-      listCar: 'collectionType_car',
-      listKid: 'collectionType_kid'
-    },
-    callback: addModelToPeople,
-    debug: true
-  });
-
-  function addModelToPeople() {
-    window.peopel.add({
+  function createNewCollection() {
+    var modelBlueprint = {
       name: 'John',
       age: 12,
       address: {
@@ -76,26 +34,130 @@ app.controller('AppCtrl', function () {
           age: 5
         }
       ]
-    }, getModelFromPeople);
+    };
+
+    window.peopel = new Collection({
+      type: 'people',
+      default: {
+        name: 'John',
+        age: '12',
+        address: {
+          line1: '93. Meridian place',
+          line2: 'London',
+          postCode: 'E14 9FF'
+        },
+        listCar: 'collectionType_car',
+        listKid: 'collectionType_kid'
+      },
+      filter: 'id < 4',
+      callback: getModelFromPeople,
+      debug: true
+    });
   }
 
-  function getModelFromPeople () {
-    console.log('hehe :)');
+  function createNewCollectionThenAdd() {
+    window.peopel = new Collection({
+      type: 'people',
+      default: {
+        name: 'John',
+        age: '12',
+        address: {
+          line1: '93. Meridian place',
+          line2: 'London',
+          postCode: 'E14 9FF'
+        },
+        listCar: 'collectionType_car',
+        listKid: 'collectionType_kid'
+      },
+      filter: 'id < 4',
+      callback: getModelFromPeople,
+      debug: true
+    });
 
-//    window.peopel.getById(1);
-//    window.peopel.getByQuery();
-  }
-
-  */
-
-  window.peopel = new Collection({
-    type: 'people',
-    debug: true,
-    filter: 'id < 2',
-    callback: function () {
-      console.log('This should represent the whole JSON: ', window.peopel.JSON);
+    function addModelToPeople() {
+      window.peopel.add({
+        name: 'John',
+        age: 12,
+        address: {
+          line1: '93. Meridian place',
+          line2: 'London',
+          postCode: 'E14 9FF'
+        },
+        listCar: ['audi', 'BMW', 'Golf'],
+        listKid: [
+          {
+            name: 'Melissa',
+            age: 6
+          },
+          {
+            name: 'Jeff',
+            age: 5
+          }
+        ]
+      }, callback);
     }
-  });
 
-//  window.listMonth = new Collection('month', 'July', {debug: true});
+    function callback () {
+      console.log('hehe :)');
+    }
+  }
+
+  function createNewCollectionLoadFromDB () {
+    window.peopel = new Collection({
+      type: 'people',
+      debug: true,
+      filter: 'id < 4',
+      callback: function () {
+        console.log('This should represent the whole JSON: ', window.peopel.JSON);
+      }
+    });
+  }
+
+  function createNewCollWithOtherCollectionsInIt () {
+    window.kid = new Collection({
+      default: {
+        name: 'Melissa',
+        age: '6'
+      },
+      debug: true
+    });
+//    var modelBlueprint = {
+//      name: 'John',
+//      age: 12,
+//      address: {
+//        line1: '93. Meridian place',
+//        line2: 'London',
+//        postCode: 'E14 9FF'
+//      },
+//      listCar: ['audi', 'BMW', 'Golf'],
+//      listKid: [
+//        {
+//          name: 'Melissa',
+//          age: 6
+//        },
+//        {
+//          name: 'Jeff',
+//          age: 5
+//        }
+//      ]
+//    };
+//
+//    window.peopel = new Collection({
+//      type: 'people',
+//      default: {
+//        name: 'John',
+//        age: '12',
+//        address: {
+//          line1: '93. Meridian place',
+//          line2: 'London',
+//          postCode: 'E14 9FF'
+//        },
+//        listCar: 'collectionType_car',
+//        listKid: 'collectionType_kid'
+//      },
+//      filter: 'id < 4',
+//      callback: getModelFromPeople,
+//      debug: true
+//    });
+  }
 });

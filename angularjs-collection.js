@@ -38,7 +38,8 @@ var Collection = function Collection(objOption) {
 
   // Name of the collection is always required
   if (typeof that.nameCollection === 'undefined') {
-    throw "Collection: collection type is required."
+    that.log('Default Model at Error: ',that.modelDefault);
+    throw "Collection: collection type is required.";
   }
 
   // If new collection is gonna be added to database
@@ -48,13 +49,14 @@ var Collection = function Collection(objOption) {
       var listSqlCtreateTabelForCollDimens = that.analyseModelDefault(that.modelDefault);
       that.log('listSql', listSqlCtreateTabelForCollDimens);
       that.executeSqlQueryList(listSqlCtreateTabelForCollDimens, function () {
-        that.log('Tabels Are Created for Collection');
-        if (typeof that.callback === 'function') {
-          that.callback();
-        }
+        that.log('Tabels Are Created for Collection. Load existing collection from webSQL if any.');
+        // Load existing collection from webSQL if any
+        that.JSON = that.loadCollectionFromWebsql('c_'+that.nameCollection, that.opt.filter);
       });
     });
   } else {
+    //todo: check if the collection exist in db
+
     that.JSON = that.loadCollectionFromWebsql('c_'+that.nameCollection, that.opt.filter);
   }
 };
