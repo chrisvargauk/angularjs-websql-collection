@@ -333,6 +333,80 @@ Collection.prototype.log = function (msg, obj) {
   }
 };
 
+// Empty All related tables to given collection in WebSQL.
 Collection.prototype.emptyWebSQL = function (nameCollection) {
+  var that = this;
 
+  if (that.isUndefined(nameCollection)) {
+    throw "Collection.emptyWebSQL(): nameCollection is required.";
+  }
+
+  that.ctrEntry('master', "nameCollection='"+nameCollection+"'", function(ctr) {
+    console.log(ctr)
+  });
+};
+
+Collection.prototype.isUndefined = function (item) {
+  return typeof item === 'undefined';
+};
+
+Collection.prototype.ifNOTInDB = function (nameTable, sqlFilter, callback) {
+  var that = this;
+
+  if (that.isUndefined(nameTable)) {
+    throw "Collection.ifInDB(): nameTable is required.";
+  }
+
+  if (that.isUndefined(callback)) {
+    throw "Collection.ifInDB(): callback is required.";
+  }
+
+  that.ctrEntry(nameTable, sqlFilter, function(ctr) {
+    if (ctr === 0) {
+      callback();
+    }
+  });
+};
+
+Collection.prototype.ifInDB = function (nameTable, sqlFilter, callback) {
+  var that = this;
+
+  if (that.isUndefined(nameTable)) {
+    throw "Collection.ifInDB(): nameTable is required.";
+  }
+
+  if (that.isUndefined(callback)) {
+    throw "Collection.ifInDB(): callback is required.";
+  }
+
+  that.ctrEntry(nameTable, sqlFilter, function(ctr) {
+    if (ctr > 0) {
+      callback(ctr);
+    }
+  });
+};
+
+Collection.prototype.ctrEntry = function (nameTable, sqlFilter, callback) {
+  var that = this;
+
+  if (that.isUndefined(nameTable)) {
+    throw "Collection.ctrEntry(): nameTable is required.";
+  }
+
+  if (that.isUndefined(callback)) {
+    throw "Collection.ctrEntry(): callback is required.";
+  }
+
+  var sqlSelect = "SELECT * FROM '"+nameTable+"'";
+
+  if(!that.isUndefined(sqlFilter)) {
+    sqlSelect += " WHERE "+sqlFilter+";";
+  }
+
+  var ctrRow = 0;
+  websql.run(sqlSelect, function() {
+    ctrRow += 1;
+  }, function () {
+    callback(ctrRow);
+  });
 };
