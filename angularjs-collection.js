@@ -50,8 +50,10 @@ var Collection = function Collection(objOption) {
       that.log('listSql', listSqlCtreateTabelForCollDimens);
       that.executeSqlQueryList(listSqlCtreateTabelForCollDimens, function () {
         that.log('Tabels Are Created for Collection. Load existing collection from webSQL if any.');
-        // Load existing collection from webSQL if any
-        that.JSON = that.loadCollectionFromWebsql('c_'+that.nameCollection, that.opt.filter);
+        that.addCollToMasterTable(that.nameCollection, that.modelDefault, function() {
+          // Load existing collection from webSQL if any
+          that.JSON = that.loadCollectionFromWebsql('c_'+that.nameCollection, that.opt.filter);
+        });
       });
     });
   } else {
@@ -120,7 +122,7 @@ Collection.prototype.checkDependencies = function () {
 };
 
 Collection.prototype.createMasterTable = function (callback) {
-  var sql = 'CREATE TABLE IF NOT EXISTS "master" (id INTEGER PRIMARY KEY ASC, tableName TEXT, columns TEXT);';
+  var sql = 'CREATE TABLE IF NOT EXISTS "master" (id INTEGER PRIMARY KEY ASC, nameCollection TEXT, defaultModel TEXT);';
   websql.run(sql, undefined, callback);
 };
 
@@ -148,7 +150,7 @@ Collection.prototype.analyseModelDefault = function (modelDefault, keyDimension,
     throw 'Collection: Default model is undefined.';
   }
 
-  // check whether current dimension is not an object
+  // check whether current dimension is an object
   if (Object.prototype.toString.call(modelDefault) !== '[object Object]') {
     throw 'Collection: Dimension "'+keyDimension+'" is not an object. It is '+Object.prototype.toString.call(modelDefault)+', value: '+modelDefault;
   }
@@ -190,6 +192,25 @@ Collection.prototype.analyseModelDefault = function (modelDefault, keyDimension,
   listSql.push(sqlCreateTable);
 
   return listSql;
+};
+
+Collection.prototype.addCollToMasterTable = function(nameCollection, modelDefault, callback) {
+  var that = this;
+
+  that.log('Add Collection to Master table if not in it yet.');
+
+  var sqlSelect = "SELECT * FROM master WHERE nameCollection='"+nameCollection+"';",
+      sqlSaveModelDefault = "INSERT INTO 'master' (nameCollection, defaultModel) VALUES ('"+nameCollection+"', '"+JSON.stringify(modelDefault)+"')";
+
+  var ctrRow = 0;
+  websql.run(sqlSelect, function() {
+    ctrRow += 1;
+  }, function () {
+    // If collection is not added to Master table yet
+    if (!ctrRow) {
+      websql.run(sqlSaveModelDefault, undefined, callback);
+    }
+  });
 };
 
 Collection.prototype.executeSqlQueryList = function (listSql, callback) {
@@ -310,4 +331,8 @@ Collection.prototype.log = function (msg, obj) {
       console.log('Collection: ' + msg, obj);
     }
   }
+};
+
+Collection.prototype.emptyWebSQL = function (nameCollection) {
+
 };

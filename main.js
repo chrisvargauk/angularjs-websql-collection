@@ -115,12 +115,14 @@ app.controller('AppCtrl', function () {
 
   function createNewCollWithOtherCollectionsInIt () {
     window.kid = new Collection({
+      type: 'kid',
       default: {
         name: 'Melissa',
         age: '6'
       },
       debug: true
     });
+
 //    var modelBlueprint = {
 //      name: 'John',
 //      age: 12,
