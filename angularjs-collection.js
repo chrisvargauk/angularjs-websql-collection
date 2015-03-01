@@ -341,8 +341,15 @@ Collection.prototype.emptyWebSQL = function (nameCollection) {
     throw "Collection.emptyWebSQL(): nameCollection is required.";
   }
 
-  that.ctrEntry('master', "nameCollection='"+nameCollection+"'", function(ctr) {
-    console.log(ctr)
+  that.ifInDB('master', "nameCollection='"+nameCollection+"'", function(ctr, listItem) {
+    var item = listItem[0],
+        defaultModel = JSON.parse(item.defaultModel);
+
+    console.log('defaultModel: ', defaultModel);
+
+    that.crawler(defaultModel, function (value, key) {
+      console.log('Iterator : ['+key+'] ', value);
+    });
   });
 };
 
@@ -361,7 +368,7 @@ Collection.prototype.ifNOTInDB = function (nameTable, sqlFilter, callback) {
     throw "Collection.ifInDB(): callback is required.";
   }
 
-  that.ctrEntry(nameTable, sqlFilter, function(ctr) {
+  that.ctrEntry(nameTable, sqlFilter, function(ctr, listItem) {
     if (ctr === 0) {
       callback();
     }
@@ -379,9 +386,9 @@ Collection.prototype.ifInDB = function (nameTable, sqlFilter, callback) {
     throw "Collection.ifInDB(): callback is required.";
   }
 
-  that.ctrEntry(nameTable, sqlFilter, function(ctr) {
+  that.ctrEntry(nameTable, sqlFilter, function(ctr, listItem) {
     if (ctr > 0) {
-      callback(ctr);
+      callback(ctr, listItem);
     }
   });
 };
@@ -403,10 +410,32 @@ Collection.prototype.ctrEntry = function (nameTable, sqlFilter, callback) {
     sqlSelect += " WHERE "+sqlFilter+";";
   }
 
-  var ctrRow = 0;
-  websql.run(sqlSelect, function() {
+  var ctrRow = 0,
+      listItem = [];
+  websql.run(sqlSelect, function(item) {
     ctrRow += 1;
+    listItem.push(item);
   }, function () {
-    callback(ctrRow);
+    callback(ctrRow, listItem);
+  });
+};
+
+Collection.prototype.crawler = function (obj, iterator, filter) {
+  var that = this;
+
+  Object.keys(obj).forEach(function (key) {
+    var value = obj[key];
+
+    iterator(value, key);
+
+    if (typeof value === 'object') {
+      if(that.isUndefined(filter)) {
+        that.crawler(value, iterator, filter);
+      } else {
+        if (filter(value, key)) {
+          that.crawler(value, iterator, filter);
+        }
+      }
+    }
   });
 };

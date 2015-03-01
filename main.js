@@ -13,6 +13,7 @@ app.controller('AppCtrl', function () {
 //  createNewCollectionThenAdd();
 //  createNewCollectionLoadFromDB();
   createNewCollWithOtherCollectionsInIt();
+//  runCrawler();
 
   function createNewCollection() {
     var modelBlueprint = {
@@ -161,5 +162,35 @@ app.controller('AppCtrl', function () {
 //      callback: getModelFromPeople,
 //      debug: true
 //    });
+  }
+
+  function runCrawler () {
+    var modelBlueprint = {
+      name: 'John',
+      age: 12,
+      address: {
+        line1: '93. Meridian place',
+        line2: 'London',
+        postCode: 'E14 9FF'
+      },
+      listCar: ['audi', 'BMW', 'Golf'],
+      listKid: [
+        {
+          name: 'Melissa',
+          age: 6
+        },
+        {
+          name: 'Jeff',
+          age: 5
+        }
+      ]
+    };
+
+    Collection.prototype.crawler(modelBlueprint, function(value, key) {
+      console.log('Iterator: ['+key+'] = ', value);
+    }, function (value, key) {
+      // Crawl deeper only if value is Object not Array
+      return Object.prototype.toString.call(value) === '[Object Object]';
+    });
   }
 });
