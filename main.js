@@ -38,6 +38,7 @@ app.controller('AppCtrl', function () {
 //    debug: true
 //  }, addModelToPeople);
 
+  /*
   window.peopel = new Collection({
     type: 'people',
     default: {
@@ -84,6 +85,13 @@ app.controller('AppCtrl', function () {
 //    window.peopel.getById(1);
 //    window.peopel.getByQuery();
   }
+
+  */
+
+  window.peopel = new Collection({
+    type: 'people',
+    debug: true
+  });
 
 //  window.listMonth = new Collection('month', 'July', {debug: true});
 });

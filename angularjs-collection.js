@@ -32,18 +32,67 @@ var Collection = function Collection(objOption) {
   that.nameCollection = that.opt.type;
   that.modelDefault = that.opt.default;
   that.callback = that.opt.callback;
+  that.JSON = [];
 
-  that.checkDependencies();
-  that.createMasterTable(function () {
-    var listSqlCtreateTabelForCollDimens = that.analyseModelDefault(that.modelDefault);
-    that.log('listSql', listSqlCtreateTabelForCollDimens);
-    that.executeSqlQueryList(listSqlCtreateTabelForCollDimens, function () {
-      that.log('Tabels Are Created for Collection');
-      if(typeof that.callback === 'function') {
-        that.callback();
+  // Name of the collection is always required
+  if (typeof that.nameCollection === 'undefined') {
+    throw "Collection: collection type is required."
+  }
+
+  // If new collection is gonna be added to database
+  if (typeof that.modelDefault !== 'undefined') {
+    that.checkDependencies();
+    that.createMasterTable(function () {
+      var listSqlCtreateTabelForCollDimens = that.analyseModelDefault(that.modelDefault);
+      that.log('listSql', listSqlCtreateTabelForCollDimens);
+      that.executeSqlQueryList(listSqlCtreateTabelForCollDimens, function () {
+        that.log('Tabels Are Created for Collection');
+        if (typeof that.callback === 'function') {
+          that.callback();
+        }
+      });
+    });
+  } else {
+    that.JSON = that.loadCollectionFromWebsql('c_'+that.nameCollection);
+  }
+};
+
+Collection.prototype.loadCollectionFromWebsql = function (keyDimension, sqlFilter, callback) {
+  var that = this,
+      JSON = [];
+
+  if (typeof sqlFilter === 'undefined') {
+    var sql = 'SELECT * FROM "'+keyDimension+'";';
+  } else {
+    var sql = 'SELECT * FROM "'+keyDimension+'" WHERE '+sqlFilter+';';
+  }
+
+  websql.run(sql, function (item) {
+    var currentDimension = {};
+    that.log('item: ', item);
+
+    Object.keys(item).forEach(function(key){
+      var value = item[key]+'';
+
+      // if value is pointing to another table
+      if (value && value.indexOf('nameTable(@)') !== -1) {
+        var nextDimAsArray;
+        nextDimAsArray = that.loadCollectionFromWebsql(value.split('(@)')[1], 'id='+item.id, function () {
+          currentDimension[key] = nextDimAsArray[0];
+        });
+      } else {
+        currentDimension[key] = value;
       }
     });
+
+    JSON.push(currentDimension);
+  }, function () {
+    if (typeof callback === "function") {
+      callback();
+    }
   });
+
+  return JSON;
 };
 
 Collection.prototype.checkDependencies = function () {
