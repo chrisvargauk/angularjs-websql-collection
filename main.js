@@ -91,7 +91,10 @@ app.controller('AppCtrl', function () {
   window.peopel = new Collection({
     type: 'people',
     debug: true,
-    filter: 'id < 2'
+    filter: 'id < 2',
+    callback: function () {
+      console.log('This should represent the whole JSON: ', window.peopel.JSON);
+    }
   });
 
 //  window.listMonth = new Collection('month', 'July', {debug: true});

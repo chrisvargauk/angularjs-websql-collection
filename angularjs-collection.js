@@ -34,6 +34,7 @@ var Collection = function Collection(objOption) {
   that.modelDefault = that.opt.default;
   that.callback = that.opt.callback;
   that.JSON = [];
+  that.ctrLoadingDims = 0;
 
   // Name of the collection is always required
   if (typeof that.nameCollection === 'undefined') {
@@ -78,8 +79,10 @@ Collection.prototype.loadCollectionFromWebsql = function (keyDimension, sqlFilte
       // if value is pointing to another table
       if (value && value.indexOf('nameTable(@)') !== -1) {
         var nextDimAsArray;
+        that.ctrLoadingDims++;
         nextDimAsArray = that.loadCollectionFromWebsql(value.split('(@)')[1], 'id='+item.id, function () {
           currentDimension[key] = nextDimAsArray[0];
+          that.ctrLoadingDims--;
         });
       } else {
         currentDimension[key] = value;
@@ -90,6 +93,10 @@ Collection.prototype.loadCollectionFromWebsql = function (keyDimension, sqlFilte
   }, function () {
     if (typeof callback === "function") {
       callback();
+    }
+
+    if (typeof that.opt.callback === "function" && that.ctrLoadingDims === 0) {
+      that.callback();
     }
   });
 
