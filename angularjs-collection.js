@@ -277,6 +277,13 @@ Collection.prototype.add = function (model, callback) {
           JSONCurrentDim[key] = 'loading..';
           listKey.push(key);
           listValue.push(modelDefaultTargetDim[key].split('_').join('(@)'));
+          var nameCollection = modelDefaultTargetDim[key].split('_')[1];
+//          var collectionSub = new Collection({
+//            type: nameCollection,
+//            callback: function () {
+//              collectionSub.add(value);
+//            }
+//          });
           break;
         case '[object Number]':
           JSONCurrentDim[key] = value+'';
@@ -325,6 +332,62 @@ Collection.prototype.add = function (model, callback) {
 
     if (listKeyModelDiff.length > 0) {
       throw 'Collection.add: Model to be added is inconsistent with default Model. New key(s) found: ' + listKeyModelDiff.join(',');
+    }
+  }
+};
+
+Collection.prototype.addArray = function (listModel, callback) {
+  var that = this;
+
+  if (Object.prototype.toString.call(listModel) !== '[object Array]') {
+    throw 'Collection.addArray(): listModel is not an Array.';
+  }
+
+  var listCmdAddModel = [];
+  listModel.forEach(function (model) {
+    listCmdAddModel.push({
+      status: 'scheduled',
+      model: model
+    });
+  });
+
+  loopListCmd(listCmdAddModel);
+
+  function loopListCmd(listCmdAddModel) {
+//    listCmdAddModel.forEach(function (cmd) {
+//      if (cmd.status === 'scheduled') {
+//        cmd.status = 'inProgress';
+//        that.add(cmd.model, function () {
+//          cmd.status = 'added';
+//          var listStatus = that.pluck(listCmdAddModel, 'status');
+//          that.log('$$$$$$$$$$$$$$$$$$$$$$ listStatus: ', listStatus);
+//          that.log('$$$$$$$$$$$$$$$$$$$$$$ ctr: ', that.ctrItem(listStatus, 'added'));
+//          if (that.ctrItem(listStatus, 'added') === listCmdAddModel.length) {
+//
+//          }
+////          loopListCmd();
+//        });
+//      }
+//    });
+
+    for (index in listCmdAddModel) {
+      var cmd = listCmdAddModel[index];
+      if (cmd.status === 'scheduled') {
+        cmd.status = 'inProgress';
+        that.add(cmd.model, function () {
+          cmd.status = 'added';
+          var listStatus = that.pluck(listCmdAddModel, 'status');
+
+          if (that.ctrItem(listStatus, 'added') !== listCmdAddModel.length) {
+            loopListCmd(listCmdAddModel);
+          } else {
+            if (!that.isUndefined(callback)) {
+              callback();
+            }
+          }
+        });
+        break;
+      }
     }
   }
 };
@@ -539,4 +602,16 @@ Collection.prototype.executeCommandList = function (listCmd, callback) {
   if (listCmd.length === 0 && typeof callback === "function") {
     callback();
   }
+};
+
+Collection.prototype.pluck = function (list, key) {
+  return list.map(function (element) {
+    return element[key];
+  });
+};
+
+Collection.prototype.ctrItem = function (list, item) {
+  return list.filter(function (element) {
+    return element === item;
+  }).length;
 };
