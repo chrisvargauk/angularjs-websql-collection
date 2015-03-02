@@ -71,11 +71,9 @@ Collection.prototype.loadDefaultModelFromWebsql = function (callback) {
   var that = this,
       sql = "SELECT * FROM master WHERE nameCollection='"+that.nameCollection+"';";
 
-  that.log('************ .loadDefaultModelFromWebsql(): sql', sql);
-
   websql.run(sql, function(item) {
     that.modelDefault = JSON.parse(item.defaultModel);
-    that.log('.loadDefaultModelFromWebsql(): modelDefault:', that.modelDefault);
+    that.log('.loadDefaultModelFromWebsql(): modelDefault is loaded:', that.modelDefault);
   }, callback);
 };
 
@@ -91,7 +89,7 @@ Collection.prototype.loadCollectionFromWebsql = function (keyDimension, sqlFilte
 
   websql.run(sql, function (item) {
     var currentDimension = {};
-    that.log('item: ', item);
+    that.log('.loadCollectionFromWebsql(): row item: ', item);
 
     Object.keys(item).forEach(function(key){
       var value = item[key]+'';
@@ -236,7 +234,6 @@ Collection.prototype.addCollToMasterTable = function(nameCollection, modelDefaul
 Collection.prototype.add = function (model, callback) {
   var that = this,
       keyDimension = that.nameCollection,
-      listSql = [],
       listCmd = [],
       JSONtemp = {};
 
@@ -290,18 +287,10 @@ Collection.prototype.add = function (model, callback) {
           listValue.push('nameTable(@)c_'+keyDimension+'_'+key);
           break;
         case '[object Array]':
-          JSONCurrentDim[key] = 'loading..';
+          JSONCurrentDim[key] = modelDefaultTargetDim[key].split('_').join('(@)');
           listKey.push(key);
           listValue.push(modelDefaultTargetDim[key].split('_').join('(@)'));
           var nameCollection = modelDefaultTargetDim[key].split('_')[1];
-          that.log('temp/add ^^^^^^^^ nameCollection:', nameCollection);
-          that.log('temp/add ^^^^^^^^ value:', value);
-          var collectionSub = new Collection({
-            type: nameCollection,
-            callback: function () {
-              collectionSub.addArray(value);
-            }
-          });
           break;
         case '[object Number]':
           JSONCurrentDim[key] = value+'';
@@ -318,10 +307,9 @@ Collection.prototype.add = function (model, callback) {
     });
     sqlInsert += ' (' + listKey.join(',') + ') VALUES ("' + listValue.join('","') + '");';
     that.log('temp/add: sqlInsert', sqlInsert);
-    listSql.push(sqlInsert);
     listCmd.push({
       sql: sqlInsert,
-      callback: function (results) {
+      callback: function (results, check) {
         // Add current dim obj to source in prev dim obj
         var key = linkToPrevDimJSONKey.key,
             JSONPrevDim = linkToPrevDimJSONKey.JSONCurrentDim;
@@ -334,6 +322,23 @@ Collection.prototype.add = function (model, callback) {
           JSONCurrentDim.id = results.insertId;
           JSONtemp = JSONCurrentDim;
         }
+
+        // Turn marks to collections on current dimension
+        Object.keys(JSONCurrentDim).forEach(function (key) {
+          var value = JSONCurrentDim[key]+'';
+
+          if(value.indexOf('collectionType(@)') !== -1) {
+            var nameCollection = value.split('(@)')[1];
+
+            JSONCurrentDim[key] = new Collection({
+              type: nameCollection,
+              debug: that.opt.debug,
+              callback: function () {
+                check();
+              }
+            });
+          }
+        });
       }
     });
 
@@ -591,21 +596,24 @@ Collection.prototype.executeSqlQueryList = function (listSql, callback) {
 
 Collection.prototype.executeCommandList = function (listCmd, callback) {
   var that = this,
-      ctr = 0;
+      ctrIterCallback = 0;
 
   if (that.isUndefined(listCmd)) {
-    throw "Collection.executeSqlQueryList(): listSql is required.";
+    throw "Collection.executeCommandList(): listSql is required.";
   }
 
   listCmd.forEach(function (cmd) {
     websql.run(cmd.sql, undefined, function (results) {
       if (!that.isUndefined(cmd.callback)) {
-        cmd.callback(results);
+        cmd.callback(results, check);
       }
 
-      ctr += 1;
-      if (ctr === listCmd.length && typeof callback === "function") {
-        callback(results);
+      function check() {
+        ctrIterCallback++;
+
+        if (ctrIterCallback === listCmd.length && typeof callback === "function") {
+          callback(results);
+        }
       }
     });
   });

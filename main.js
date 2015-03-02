@@ -3,6 +3,7 @@ var app = angular.module('app', []);
 // Done: break up the test to scenarios
 // Done: Create 'car' and and 'kid' collection types, check for errors if not done yet
 // Todo: link up other collections in collections. Pass along the id
+// Todo: - add idCollectionLink to every single table
 // Todo: collection.empty, collection.deleteTables, collection.update
 // Todo: Sync JSON
 
@@ -132,7 +133,7 @@ app.controller('AppCtrl', function () {
     }
 
     function callback () {
-      console.log('hehe :)');
+      console.log('hehe :)', peopel.JSON[3].listKid.JSON);
     }
   }
 
