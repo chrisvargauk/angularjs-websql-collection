@@ -59,8 +59,24 @@ var Collection = function Collection(objOption) {
   } else {
     //todo: check if the collection exist in db
 
-    that.JSON = that.loadCollectionFromWebsql('c_'+that.nameCollection, that.opt.filter);
+    that.loadDefaultModelFromWebsql(function () {
+      that.JSON = that.loadCollectionFromWebsql('c_'+that.nameCollection, that.opt.filter);
+    });
+
+//    that.JSON = that.loadCollectionFromWebsql('c_'+that.nameCollection, that.opt.filter);
   }
+};
+
+Collection.prototype.loadDefaultModelFromWebsql = function (callback) {
+  var that = this,
+      sql = "SELECT * FROM master WHERE nameCollection='"+that.nameCollection+"';";
+
+  that.log('************ .loadDefaultModelFromWebsql(): sql', sql);
+
+  websql.run(sql, function(item) {
+    that.modelDefault = JSON.parse(item.defaultModel);
+    that.log('.loadDefaultModelFromWebsql(): modelDefault:', that.modelDefault);
+  }, callback);
 };
 
 Collection.prototype.loadCollectionFromWebsql = function (keyDimension, sqlFilter, callback) {
@@ -278,12 +294,14 @@ Collection.prototype.add = function (model, callback) {
           listKey.push(key);
           listValue.push(modelDefaultTargetDim[key].split('_').join('(@)'));
           var nameCollection = modelDefaultTargetDim[key].split('_')[1];
-//          var collectionSub = new Collection({
-//            type: nameCollection,
-//            callback: function () {
-//              collectionSub.add(value);
-//            }
-//          });
+          that.log('temp/add ^^^^^^^^ nameCollection:', nameCollection);
+          that.log('temp/add ^^^^^^^^ value:', value);
+          var collectionSub = new Collection({
+            type: nameCollection,
+            callback: function () {
+              collectionSub.addArray(value);
+            }
+          });
           break;
         case '[object Number]':
           JSONCurrentDim[key] = value+'';
@@ -323,6 +341,16 @@ Collection.prototype.add = function (model, callback) {
   }
 
   function compareObj(model, modelDefault) {
+    if (that.isUndefined(model)) {
+      console.log('modelDefault at Error: ', modelDefault);
+      throw 'Collection.add(): model cant be undefined';
+    }
+
+    if (that.isUndefined(modelDefault)) {
+      console.log('Model at Error: ', model);
+      throw 'Collection.add(): modelDefault cant be undefined';
+    }
+
     var listKeyModel = Object.keys(model),
         listKeyModelDefault = Object.keys(modelDefault);
 
@@ -354,22 +382,6 @@ Collection.prototype.addArray = function (listModel, callback) {
   loopListCmd(listCmdAddModel);
 
   function loopListCmd(listCmdAddModel) {
-//    listCmdAddModel.forEach(function (cmd) {
-//      if (cmd.status === 'scheduled') {
-//        cmd.status = 'inProgress';
-//        that.add(cmd.model, function () {
-//          cmd.status = 'added';
-//          var listStatus = that.pluck(listCmdAddModel, 'status');
-//          that.log('$$$$$$$$$$$$$$$$$$$$$$ listStatus: ', listStatus);
-//          that.log('$$$$$$$$$$$$$$$$$$$$$$ ctr: ', that.ctrItem(listStatus, 'added'));
-//          if (that.ctrItem(listStatus, 'added') === listCmdAddModel.length) {
-//
-//          }
-////          loopListCmd();
-//        });
-//      }
-//    });
-
     for (index in listCmdAddModel) {
       var cmd = listCmdAddModel[index];
       if (cmd.status === 'scheduled') {

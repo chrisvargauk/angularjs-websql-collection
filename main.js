@@ -10,8 +10,9 @@ app.controller('AppCtrl', function () {
   console.log('Controller loaded');
 
 //  createNewCollection();
-//  createNewCollectionThenAdd();
-  createNewCollectionThenAddArray();
+  createNewCollectionThenAdd();
+//  createNewCollectionNoDefaultProvThenAdd();
+//  createNewCollectionThenAddArray();
 //  createNewCollectionLoadFromDB();
 //  createNewCollWithOtherCollectionsInIt();
 //  runCrawler();
@@ -29,7 +30,7 @@ app.controller('AppCtrl', function () {
         line2: 'London',
         postCode: 'E14 9FF'
       },
-      listCar: ['audi', 'BMW', 'Golf'],
+      listCar: [{name: 'audi'}, {name: 'BMW'}, {name: 'Golf'}],
       listKid: [
         {
           name: 'Melissa',
@@ -66,6 +67,76 @@ app.controller('AppCtrl', function () {
   }
 
   function createNewCollectionThenAdd() {
+    window.cKid = new Collection({
+      type: 'kid',
+      default: {
+        name: 'Melissa',
+        age: '6'
+      },
+      callback: loadCarCollection,
+      debug: true
+    });
+
+    function loadCarCollection() {
+      window.cCar = new Collection({
+        type: 'car',
+        default: {
+          name: 'Audi'
+        },
+        callback: loadPeopleCollection,
+        debug: true
+      });
+    }
+
+    function loadPeopleCollection () {
+      window.peopel = new Collection({
+        type: 'people',
+        default: {
+          name: 'John',
+          age: '12',
+          address: {
+            line1: '93. Meridian place',
+            line2: 'London',
+            postCode: 'E14 9FF'
+          },
+          listCar: 'collectionType_car',
+          listKid: 'collectionType_kid'
+        },
+        filter: 'id < 4',
+        callback: addModelToPeople,
+        debug: true
+      });
+    }
+
+    function addModelToPeople() {
+      window.peopel.add({
+        name: 'John',
+        age: 12,
+        address: {
+          line1: '93. Meridian place',
+          line2: 'London',
+          postCode: 'E14 9FF'
+        },
+        listCar: [{name: 'audi'}, {name: 'BMW'}, {name: 'Golf'}],
+        listKid: [
+          {
+            name: 'Melissa',
+            age: 6
+          },
+          {
+            name: 'Jeff',
+            age: 5
+          }
+        ]
+      }, callback);
+    }
+
+    function callback () {
+      console.log('hehe :)');
+    }
+  }
+
+  function createNewCollectionNoDefaultProvThenAdd() {
     window.peopel = new Collection({
       type: 'people',
       default: {
@@ -93,7 +164,7 @@ app.controller('AppCtrl', function () {
           line2: 'London',
           postCode: 'E14 9FF'
         },
-        listCar: ['audi', 'BMW', 'Golf'],
+        listCar: [{name: 'audi'}, {name: 'BMW'}, {name: 'Golf'}],
         listKid: [
           {
             name: 'Melissa',
@@ -265,7 +336,7 @@ app.controller('AppCtrl', function () {
         line2: 'London',
         postCode: 'E14 9FF'
       },
-      listCar: ['audi', 'BMW', 'Golf'],
+      listCar: [{name: 'audi'}, {name: 'BMW'}, {name: 'Golf'}],
       listKid: [
         {
           name: 'Melissa',
