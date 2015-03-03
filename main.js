@@ -212,8 +212,8 @@ app.controller('AppCtrl', function () {
           },
           listKid: 'collectionType_kid'
         },
-//        callback: addModelToPeople,
-        callback: callbackEnd,
+        callback: addModelToPeople,
+//        callback: callbackEnd,
         debug: true
       });
     }
@@ -237,6 +237,7 @@ app.controller('AppCtrl', function () {
             age: 5
           }
         ]
+//      }, addToKidInCollPeople);
       }, callbackEnd);
     }
 
@@ -259,17 +260,32 @@ app.controller('AppCtrl', function () {
 //      debug: true
 //    });
 //
+
+    function addToKidInCollPeople() {
+      cPeople.JSON[0].listKid.add({
+        name: 'Steve',
+        age: '6'
+      }, callbackEnd);
+    }
+
     function callbackEnd() {
       console.log('Done :)');
       console.log('cPeople.JSON: ', cPeople.JSON);
       console.log('cPeople.JSON[0].listKid.JSON: ', cPeople.JSON[0].listKid.JSON);
+
+      var size = cPeople.JSON.length,
+          optLast = cPeople.JSON[size-1].listKid.opt,
+          optFirst = cPeople.JSON[0].listKid.opt;
+
+      console.log('opt in Kid in first cPeople: ', optFirst);
+      console.log('opt in Kid in last cPeople: ', optLast);
     }
   }();
   var cleanUp =  function () {
 //    Collection.prototype.deleteWebSQL('kid');
     Collection.prototype.deleteWebSQL('people');
     websql.emptyTable('master');
-//    websql.deleteTable('c_kid');
+    websql.deleteTable('c_kid');
   };
 
 

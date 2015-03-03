@@ -18,6 +18,7 @@ var Collection = function Collection(objOption) {
         filter: undefined,
         default: undefined,
         callback: undefined,
+        idLink: undefined,
         debug: false
       };
 
@@ -106,6 +107,7 @@ Collection.prototype.loadCollectionFromWebsql = function (keyDimension, sqlFilte
         that.ctrLoadingDims++;
         currentDimension[key] = new Collection({
           type: (value.split('(@)')[1]),
+          idLink: item.id,
           callback: function (JSON) {
             that.ctrLoadingDims--;
             if (typeof that.opt.callback === "function" && that.ctrLoadingDims === 0) {
@@ -182,7 +184,7 @@ Collection.prototype.analyseModelDefault = function (modelDefault, keyDimension,
   }
 
   var keyDimension = keyDimension || that.nameCollection,
-      sqlCreateTable = 'CREATE TABLE IF NOT EXISTS "c_' + keyDimension + '" (id INTEGER PRIMARY KEY ASC',
+      sqlCreateTable = 'CREATE TABLE IF NOT EXISTS "c_' + keyDimension + '" (id INTEGER PRIMARY KEY ASC, idLink INTEGER',
       listSql = listSql || [];
 
   // Check key value pairs on current dimension
@@ -307,7 +309,6 @@ Collection.prototype.add = function (model, callback) {
           JSONCurrentDim[key] = modelDefaultTargetDim[key].split('_').join('(@)');
           listKey.push(key);
           listValue.push(modelDefaultTargetDim[key].split('_').join('(@)'));
-          var nameCollection = modelDefaultTargetDim[key].split('_')[1];
           break;
         case '[object Number]':
           JSONCurrentDim[key] = value+'';
@@ -351,12 +352,14 @@ Collection.prototype.add = function (model, callback) {
           var value = JSONCurrentDim[key]+'';
 
           if(value.indexOf('collectionType(@)') !== -1) {
-            var nameCollection = value.split('(@)')[1];
+            var nameCollection = value.split('(@)')[1],
+                idLink = JSONCurrentDim.id;
 
             runnerSubColl.schedule(function(resolveSubColl){
               JSONCurrentDim[key] = new Collection({
                 type: nameCollection,
                 debug: that.opt.debug,
+                idLink: idLink,
                 callback: function() {
                   resolveSubColl();
                 }
