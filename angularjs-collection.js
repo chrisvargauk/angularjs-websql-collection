@@ -111,7 +111,8 @@ Collection.prototype.loadCollectionFromWebsql = function (keyDimension, sqlFilte
             if (typeof that.opt.callback === "function" && that.ctrLoadingDims === 0) {
               that.opt.callback(that.JSON);
             }
-          }
+          },
+          debug: that.opt.debug
         });
       } else {
         currentDimension[key] = value;
