@@ -485,9 +485,16 @@ Collection.prototype.emptyWebSQL = function (nameCollection, callback) {
 
     console.log('defaultModel: ', defaultModel);
 
+    var ctrIter = 0;
     that.crawler(defaultModel, undefined, undefined, function (obj, keyDimension) {
       console.log('Iterator : ['+keyDimension+'] ', obj);
-      websql.emptyTable('c_'+keyDimension, callback);
+      ctrIter++;
+      websql.emptyTable('c_'+keyDimension, function () {
+        ctrIter--;
+        if (ctrIter === 0 && typeof callback === 'function') {
+          callback();
+        }
+      });
     }, nameCollection);
   });
 };
@@ -502,9 +509,10 @@ Collection.prototype.deleteWebSQL = function (nameCollection, callback) {
     throw "Collection.deleteWebSQL(): nameCollection is required.";
   }
 
-//  that.ifNOTInDB('master', "nameCollection='"+nameCollection+"'", function() {
+  that.ifNOTInDB('master', "nameCollection='"+nameCollection+"'", function() {
 //    throw 'Collection.deleteWebSQL: Collection "'+nameCollection+'" is NOT in master table.';
-//  });
+    callback();
+  });
 
   that.ifInDB('master', "nameCollection='"+nameCollection+"'", function(ctr, listItem) {
     var item = listItem[0],
@@ -512,9 +520,16 @@ Collection.prototype.deleteWebSQL = function (nameCollection, callback) {
 
     console.log('defaultModel: ', defaultModel);
 
+    var ctrIter = 0;
     that.crawler(defaultModel, undefined, undefined, function (obj, keyDimension) {
+      ctrIter++;
       websql.deleteTable('c_'+keyDimension, function () {
-        websql.run("DELETE FROM 'master' WHERE nameCollection='" + nameCollection + "';", undefined, callback);
+        websql.run("DELETE FROM 'master' WHERE nameCollection='" + nameCollection + "';", undefined, function () {
+          ctrIter--;
+          if (ctrIter === 0 && typeof callback === 'function') {
+            callback();
+          }
+        });
       });
     }, nameCollection);
   });

@@ -1,11 +1,14 @@
-var app = angular.module('app', []);
-
 // Done: break up the test to scenarios
 // Done: Create 'car' and and 'kid' collection types, check for errors if not done yet
-// Todo: link up other collections in collections. Pass along the id
-// Todo: - add idCollectionLink to every single table
-// Todo: collection.empty, collection.deleteTables, collection.update
-// Todo: Sync JSON
+// Done: link up other collections in collections. Pass along the id
+// Done: - add idCollectionLink to every single table
+// Done: collection.empty, collection.deleteTables, collection.update
+// Done: Sync JSON
+// Todo: Collection.removeById
+// Todo: collectionInstance.remove
+// Todo: collectionInstance.update
+
+var app = angular.module('app', []);
 
 app.controller('AppCtrl', function () {
   console.log('Controller loaded');
@@ -166,13 +169,14 @@ app.controller('AppCtrl', function () {
    * */
   var sc = function () {
     function cleanUp() {
-      Collection.prototype.deleteWebSQL('kid');
-      Collection.prototype.deleteWebSQL('people');
+      Collection.prototype.deleteWebSQL('kid', function () {
+        Collection.prototype.deleteWebSQL('people', createCollectionKid());
+      });
     }
 
-//    cleanUp();
+    cleanUp();
 //    createCollectionKid();
-    createCollectionKid();
+//    createCollectionKid();
 //    createCollectionPeople();
 
     function createCollectionKid() {
@@ -264,10 +268,6 @@ app.controller('AppCtrl', function () {
 
     function addToKidInCollPeople() {
       var size = cPeople.JSON.length;
-//      cPeople.JSON[size-1].listKid.add({
-//        name: 'Steve',
-//        age: '6'
-//      }, callbackEnd);
       cPeople.JSON[size-1].listKid.addArray([
         {
           name: 'Steve',
@@ -284,8 +284,6 @@ app.controller('AppCtrl', function () {
       console.log('Done :)');
 
       console.log('cPeople.JSON: ', cPeople.JSON);
-      console.log('cPeople.JSON[0].listKid.JSON: ', cPeople.JSON[0].listKid.JSON);
-
       var size = cPeople.JSON.length,
           optLast = cPeople.JSON[size-1].listKid.opt,
           optFirst = cPeople.JSON[0].listKid.opt;
