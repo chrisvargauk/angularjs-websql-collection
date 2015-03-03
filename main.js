@@ -32,6 +32,7 @@ app.controller('AppCtrl', function () {
 
     function callback() {
       console.log('Done :)');
+      console.log('window.people.JSON[0].address:', window.people.JSON[0].address);
     }
   };
   var cleanUp =  function () {
@@ -261,6 +262,7 @@ app.controller('AppCtrl', function () {
     function callbackEnd() {
       console.log('Done :)');
       console.log('cPeople.JSON: ', cPeople.JSON);
+      console.log('cPeople.JSON[0].listKid.JSON: ', cPeople.JSON[0].listKid.JSON);
     }
   }();
   var cleanUp =  function () {
@@ -338,6 +340,35 @@ app.controller('AppCtrl', function () {
 
     runner.done(function () {
       console.log('All commands are done :)');
+    });
+
+    runner.run();
+  };
+
+  /* AsyncRunner - with options*/
+  var sc = function () {
+    var runner = new Collection.prototype.asyncRunner();
+
+    runner.done(function () {
+      console.log('All commands are done :)');
+    });
+
+    runner.schedule(
+      function (resolve, opt) {
+        setTimeout(function (){
+          console.log('hehe - opt.a:', opt.a);
+          resolve();
+        }, 1000);
+      },
+      {
+        a: 5
+      });
+
+    runner.schedule(function (resolve) {
+      setTimeout(function (){
+        console.log('hihi - no options');
+        resolve();
+      }, 1000);
     });
 
     runner.run();

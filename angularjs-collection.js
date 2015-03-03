@@ -102,6 +102,17 @@ Collection.prototype.loadCollectionFromWebsql = function (keyDimension, sqlFilte
           currentDimension[key] = nextDimAsArray[0];
           that.ctrLoadingDims--;
         });
+      } else if (value && value.indexOf('collectionType(@)') !== -1) {
+        that.ctrLoadingDims++;
+        currentDimension[key] = new Collection({
+          type: (value.split('(@)')[1]),
+          callback: function (JSON) {
+            that.ctrLoadingDims--;
+            if (typeof that.opt.callback === "function" && that.ctrLoadingDims === 0) {
+              that.opt.callback(that.JSON);
+            }
+          }
+        });
       } else {
         currentDimension[key] = value;
       }
@@ -114,7 +125,7 @@ Collection.prototype.loadCollectionFromWebsql = function (keyDimension, sqlFilte
     }
 
     if (typeof that.opt.callback === "function" && that.ctrLoadingDims === 0) {
-      that.callback();
+      that.opt.callback(that.JSON);
     }
   });
 
@@ -668,18 +679,21 @@ Collection.prototype.asyncRunner = function (callback) {
   this.cmdRunning;
 };
 
-Collection.prototype.asyncRunner.prototype.schedule = function (cmd) {
+Collection.prototype.asyncRunner.prototype.schedule = function (cmd, opt) {
   this.listCmd.push({
     cmd: cmd,
+    opt: opt,
     status: 'scheduled'
   });
 };
 
 Collection.prototype.asyncRunner.prototype.run = function () {
   var that = this;
+  that.listResult = [];
+
   var resolve = function resolve() {
     if (that.listCmd.length === 0) {
-      that.callbackEnd();
+      that.callbackEnd(that.listResult);
     }
 
     // Set status = 'done' to prev cmd if any
@@ -694,7 +708,7 @@ Collection.prototype.asyncRunner.prototype.run = function () {
           ctrDone === that.listCmd.length &&
           typeof that.callbackEnd === 'function'
     ) {
-      that.callbackEnd();
+      that.callbackEnd(that.listResult);
     } else {
       for (var index in that.listCmd) {
         var element = that.listCmd[index];
@@ -702,7 +716,8 @@ Collection.prototype.asyncRunner.prototype.run = function () {
         if (element.status === 'scheduled') {
           element.status === 'running';
           that.cmdRunning = element;
-          element.cmd(resolve);
+          var result = element.cmd(resolve, element.opt);
+          that.listResult.push(result);
           break;
         }
       }
