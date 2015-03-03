@@ -14,7 +14,7 @@ app.controller('AppCtrl', function () {
   *  Create table structure according to multi-dimensional obj structure.
   * */
   var sc = function () {
-    window.peopel = new Collection({
+    window.people = new Collection({
       type: 'people',
       default: {
         name: 'John',
@@ -39,8 +39,12 @@ app.controller('AppCtrl', function () {
     websql.emptyTable('master');
   };
 
+  /* collection: create multi-dim collection then add model
+   *  Create table structure according to multi-dimensional obj structure,
+   *  then add a model in it.
+   * */
   var sc = function () {
-    window.peopel = new Collection({
+    window.people = new Collection({
       type: 'people',
       default: {
         name: 'John',
@@ -75,6 +79,253 @@ app.controller('AppCtrl', function () {
   var cleanUp =  function () {
     Collection.prototype.deleteWebSQL('people');
     websql.emptyTable('master');
+  };
+
+  /* collection: create multi-dim collection and check whether properties are loaded.
+   *  Create table structure according to multi-dimensional obj structure.
+   *  If there are properties saved to WebSQL than they will be loaded back for the collection.
+   *
+   *  Note: You need a model already being added to collection, otherwise there is nothing to add,
+   *        run one of the scenarios that adds model to collection.
+   * */
+  var sc = function () {
+    window.people = new Collection({
+      type: 'people',
+      filter: 'id < 4',
+      callback: callback,
+      debug: true
+    });
+
+    function callback() {
+      console.log('Done :)');
+      console.log('people.JSON:', people.JSON);
+    }
+  };
+  var cleanUp =  function () {
+    Collection.prototype.deleteWebSQL('people');
+    websql.emptyTable('master');
+  };
+
+  /* collection: create multi-dim collection then add a list of models
+   *  Create table structure according to multi-dimensional obj structure,
+   *  then add a list of model at one.
+   * */
+  var sc = function () {
+    window.people = new Collection({
+      type: 'people',
+      default: {
+        name: 'John',
+        age: '12',
+        address: {
+          line1: '93. Meridian place',
+          line2: 'London',
+          postCode: 'E14 9FF'
+        }
+      },
+      filter: 'id < 4',
+      callback: addModelToPeople,
+      debug: true
+    });
+
+    function addModelToPeople() {
+      var listModel = [
+        {
+          name: 'John',
+          age: 12,
+          address: {
+            line1: '93. Meridian place',
+            line2: 'London',
+            postCode: 'E14 9FF'
+          }
+        },{
+          name: 'Jane',
+          age: 11,
+          address: {
+            line1: '72. Woodlane',
+            line2: 'London',
+            postCode: 'W9 9FF'
+          }
+        }
+      ];
+
+      window.people.addArray(listModel, callback);
+    }
+
+    function callback () {
+      console.log('hehe :)');
+    }
+  };
+  var cleanUp =  function () {
+    Collection.prototype.deleteWebSQL('people');
+    websql.emptyTable('master');
+  };
+
+  /* collection: create multi-dim collection with other collection in it.
+   *  Create table structure according to multi-dimensional obj structure.
+   * */
+  var sc = function () {
+    function cleanUp() {
+      Collection.prototype.deleteWebSQL('kid');
+      Collection.prototype.deleteWebSQL('people');
+    }
+
+//    cleanUp();
+    createCollectionKid();
+
+    function createCollectionKid() {
+      window.cKid = new Collection({
+        type: 'kid',
+        default: {
+          name: 'Melissa',
+          age: '6'
+        },
+        callback: addListToKid,
+        debug: true
+      });
+    }
+
+    function addListToKid() {
+      window.cKid.addArray([
+        {
+          name: 'Melissa',
+          age: '6'
+        },
+        {
+          name: 'James',
+          age: '8'
+        }
+      ], createCollectionPeople);
+    }
+
+    function createCollectionPeople() {
+      window.cPeople = new Collection({
+        type: 'people',
+        default: {
+          name: 'John',
+          age: '12',
+          address: {
+            line1: '93. Meridian place',
+            line2: 'London',
+            postCode: 'E14 9FF'
+          },
+          listKid: 'collectionType_kid'
+        },
+        filter: 'id < 4',
+        callback: addModelToPeople,
+        debug: true
+      });
+    }
+
+    function addModelToPeople() {
+      window.cPeople.add({
+        name: 'John',
+        age: 12,
+        address: {
+          line1: '93. Meridian place',
+          line2: 'London',
+          postCode: 'E14 9FF'
+        },
+        listKid: [
+          {
+            name: 'Melissa',
+            age: 6
+          },
+          {
+            name: 'Jeff',
+            age: 5
+          }
+        ]
+      }, callbackEnd);
+    }
+
+    // todo: create a Collection instance programmatically to array but dont add the array just yet.
+
+//    window.people = new Collection({
+//      type: 'people',
+//      default: {
+//        name: 'John',
+//        age: '12',
+//        address: {
+//          line1: '93. Meridian place',
+//          line2: 'London',
+//          postCode: 'E14 9FF'
+//        },
+//        listKid: 'collectionType_kid'
+//      },
+//      filter: 'id < 4',
+//      callback: callback,
+//      debug: true
+//    });
+//
+    function callbackEnd() {
+      console.log('Done :)');
+    }
+  }();
+  var cleanUp =  function () {
+    Collection.prototype.deleteWebSQL('people');
+    websql.emptyTable('master');
+  };
+
+
+
+  /* ###############
+  *  UTILITY METHODS
+  *  ############### */
+
+  /* Crawler */
+  var sc = function () {
+    var modelBlueprint = {
+      name: 'John',
+      age: 12,
+      address: {
+        line1: '93. Meridian place',
+        line2: 'London',
+        postCode: 'E14 9FF'
+      },
+      listCar: [{name: 'audi'}, {name: 'BMW'}, {name: 'Golf'}],
+      listKid: [
+        {
+          name: 'Melissa',
+          age: 6
+        },
+        {
+          name: 'Jeff',
+          age: 5
+        }
+      ]
+    };
+
+    Collection.prototype.crawler(modelBlueprint, function(value, key) {
+      console.log('Iterator: ['+key+'] = ', value);
+    }, function (value, key) {
+      // Crawl deeper only if value is Object not Array
+      return Object.prototype.toString.call(value) === '[Object Object]';
+    });
+  };
+
+  /* AsyncRunner */
+  var sc = function () {
+    var runner = new Collection.prototype.asyncRunner();
+
+    runner.done(function () {
+      console.log('All commands are done :)');
+    });
+
+    runner.schedule(function (resolve) {
+      setTimeout(function (){
+        console.log('hehe');
+        resolve();
+      }, 1000);
+    });
+
+    runner.schedule(function (resolve) {
+      setTimeout(function (){
+        console.log('hihi');
+        resolve();
+      }, 1000);
+    });
+
+    runner.run();
   };
 
 //  createNewCollection();

@@ -457,9 +457,9 @@ Collection.prototype.deleteWebSQL = function (nameCollection, callback) {
     throw "Collection.deleteWebSQL(): nameCollection is required.";
   }
 
-  that.ifNOTInDB('master', "nameCollection='"+nameCollection+"'", function() {
-    throw 'Collection.deleteWebSQL: Collection "'+nameCollection+'" is NOT in master table.';
-  });
+//  that.ifNOTInDB('master', "nameCollection='"+nameCollection+"'", function() {
+//    throw 'Collection.deleteWebSQL: Collection "'+nameCollection+'" is NOT in master table.';
+//  });
 
   that.ifInDB('master', "nameCollection='"+nameCollection+"'", function(ctr, listItem) {
     var item = listItem[0],
@@ -544,6 +544,10 @@ Collection.prototype.ctrEntry = function (nameTable, sqlFilter, callback) {
   });
 };
 
+/* Description: It crawls through a multi-dim obj and runs the callback on every key-value pair.
+ * If you pass a filter, it will run the filter on every key-value pair and caries on
+ * only if the filter returns true.
+ * */
 Collection.prototype.crawler = function (obj, iterator, filter, iteratorDimEnd, keyDimension) {
   var that = this;
 
@@ -631,3 +635,63 @@ Collection.prototype.ctrItem = function (list, item) {
     return element === item;
   }).length;
 };
+
+/* Description: run async methods synchronously
+ *  runnerInstance.schedule(cmd): pass methods to run them later
+ *  runnerInstance.done(callback): pass a method to run after all other methods have run.
+ *  runnerInstance.run(): start running methods
+ *
+ *  Note: all methods will run one after another, there is no overlap between two methods
+ * */
+
+Collection.prototype.asyncRunner = function (callback) {
+  this.callbackEnd = callback;
+  this.listCmd = [];
+  this.cmdRunning;
+};
+
+Collection.prototype.asyncRunner.prototype.schedule = function (cmd) {
+  this.listCmd.push({
+    cmd: cmd,
+    status: 'scheduled'
+  });
+};
+
+Collection.prototype.asyncRunner.prototype.run = function () {
+  var that = this;
+  var resolve = function resolve() {
+    // Set status = 'done' to prev cmd if any
+    if (typeof that.cmdRunning !== 'undefined') {
+      that.cmdRunning.status = 'done';
+    }
+
+    // if all cmd are done than call callbackEnd if not carry on with cmd list
+    var listStatus = Collection.prototype.pluck(that.listCmd, 'status'),
+        ctrDone = Collection.prototype.ctrItem(listStatus, 'done');
+    if (  that.listCmd.length !== 0 &&
+          ctrDone === that.listCmd.length &&
+          typeof that.callbackEnd === 'function'
+    ) {
+      that.callbackEnd();
+    } else {
+      for (var index in that.listCmd) {
+        var element = that.listCmd[index];
+
+        if (element.status === 'scheduled') {
+          element.status === 'running';
+          that.cmdRunning = element;
+          element.cmd(resolve);
+          break;
+        }
+      }
+    }
+  };
+
+  resolve();
+};
+
+// This is the same as passing the callback at object creation
+Collection.prototype.asyncRunner.prototype.done = function (callback) {
+  this.callbackEnd = callback;
+};
+
