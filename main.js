@@ -10,8 +10,75 @@ var app = angular.module('app', []);
 app.controller('AppCtrl', function () {
   console.log('Controller loaded');
 
+  /* collection: create multi-dim collection.
+  *  Create table structure according to multi-dimensional obj structure.
+  * */
+  var sc = function () {
+    window.peopel = new Collection({
+      type: 'people',
+      default: {
+        name: 'John',
+        age: '12',
+        address: {
+          line1: '93. Meridian place',
+          line2: 'London',
+          postCode: 'E14 9FF'
+        }
+      },
+      filter: 'id < 4',
+      callback: callback,
+      debug: true
+    });
+
+    function callback() {
+      console.log('Done :)');
+    }
+  };
+  var cleanUp =  function () {
+    Collection.prototype.deleteWebSQL('people');
+    websql.emptyTable('master');
+  };
+
+  var sc = function () {
+    window.peopel = new Collection({
+      type: 'people',
+      default: {
+        name: 'John',
+        age: '12',
+        address: {
+          line1: '93. Meridian place',
+          line2: 'London',
+          postCode: 'E14 9FF'
+        }
+      },
+      filter: 'id < 4',
+      callback: addModelToPeople,
+      debug: true
+    });
+
+    function addModelToPeople() {
+      window.peopel.add({
+        name: 'John',
+        age: 12,
+        address: {
+          line1: '93. Meridian place',
+          line2: 'London',
+          postCode: 'E14 9FF'
+        }
+      }, callback);
+    }
+
+    function callback () {
+      console.log('hehe :)');
+    }
+  };
+  var cleanUp =  function () {
+    Collection.prototype.deleteWebSQL('people');
+    websql.emptyTable('master');
+  };
+
 //  createNewCollection();
-  createNewCollectionThenAdd();
+//  createNewCollectionThenAdd();
 //  createNewCollectionNoDefaultProvThenAdd();
 //  createNewCollectionThenAddArray();
 //  createNewCollectionLoadFromDB();
@@ -129,11 +196,25 @@ app.controller('AppCtrl', function () {
             age: 5
           }
         ]
-      }, callback);
+      }, addListCar);
+    }
+
+    function addListCar() {
+      var size = window.peopel.JSON.length;
+      window.peopel.JSON[(size-1)].listKid.addArray([
+        {
+          name: 'Melissa',
+          age: 6
+        },
+        {
+          name: 'Jeff',
+          age: 5
+        }
+      ], callback);
     }
 
     function callback () {
-      console.log('hehe :)', peopel.JSON[3].listKid.JSON);
+      console.log('hehe :)');
     }
   }
 

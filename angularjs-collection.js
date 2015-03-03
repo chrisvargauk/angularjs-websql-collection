@@ -309,7 +309,7 @@ Collection.prototype.add = function (model, callback) {
     that.log('temp/add: sqlInsert', sqlInsert);
     listCmd.push({
       sql: sqlInsert,
-      callback: function (results, check) {
+      callback: function (results) {
         // Add current dim obj to source in prev dim obj
         var key = linkToPrevDimJSONKey.key,
             JSONPrevDim = linkToPrevDimJSONKey.JSONCurrentDim;
@@ -324,21 +324,20 @@ Collection.prototype.add = function (model, callback) {
         }
 
         // Turn marks to collections on current dimension
-        Object.keys(JSONCurrentDim).forEach(function (key) {
-          var value = JSONCurrentDim[key]+'';
-
-          if(value.indexOf('collectionType(@)') !== -1) {
-            var nameCollection = value.split('(@)')[1];
-
-            JSONCurrentDim[key] = new Collection({
-              type: nameCollection,
-              debug: that.opt.debug,
-              callback: function () {
-                check();
-              }
-            });
-          }
-        });
+//        Object.keys(JSONCurrentDim).forEach(function (key) {
+//          var value = JSONCurrentDim[key]+'';
+//
+//          if(value.indexOf('collectionType(@)') !== -1) {
+//            var nameCollection = value.split('(@)')[1];
+//
+//            JSONCurrentDim[key] = new Collection({
+//              type: nameCollection,
+//              debug: that.opt.debug,
+//              callback: function () {
+//              }
+//            });
+//          }
+//        });
       }
     });
 
@@ -605,15 +604,12 @@ Collection.prototype.executeCommandList = function (listCmd, callback) {
   listCmd.forEach(function (cmd) {
     websql.run(cmd.sql, undefined, function (results) {
       if (!that.isUndefined(cmd.callback)) {
-        cmd.callback(results, check);
+        cmd.callback(results);
       }
 
-      function check() {
-        ctrIterCallback++;
-
-        if (ctrIterCallback === listCmd.length && typeof callback === "function") {
-          callback(results);
-        }
+      ctrIterCallback++;
+      if (ctrIterCallback === listCmd.length && typeof callback === "function") {
+        callback(results);
       }
     });
   });
