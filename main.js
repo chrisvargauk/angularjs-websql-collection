@@ -172,7 +172,8 @@ app.controller('AppCtrl', function () {
 
 //    cleanUp();
 //    createCollectionKid();
-    createCollectionPeople();
+    createCollectionKid();
+//    createCollectionPeople();
 
     function createCollectionKid() {
       window.cKid = new Collection({
@@ -181,7 +182,7 @@ app.controller('AppCtrl', function () {
           name: 'Melissa',
           age: '6'
         },
-        callback: addListToKid,
+        callback: createCollectionPeople,
         debug: true
       });
     }
@@ -237,8 +238,8 @@ app.controller('AppCtrl', function () {
             age: 5
           }
         ]
-//      }, addToKidInCollPeople);
-      }, callbackEnd);
+      }, addToKidInCollPeople);
+//      }, callbackEnd);
     }
 
     // todo: create a Collection instance programmatically to array but dont add the array just yet.
@@ -262,14 +263,26 @@ app.controller('AppCtrl', function () {
 //
 
     function addToKidInCollPeople() {
-      cPeople.JSON[0].listKid.add({
-        name: 'Steve',
-        age: '6'
-      }, callbackEnd);
+      var size = cPeople.JSON.length;
+//      cPeople.JSON[size-1].listKid.add({
+//        name: 'Steve',
+//        age: '6'
+//      }, callbackEnd);
+      cPeople.JSON[size-1].listKid.addArray([
+        {
+          name: 'Steve',
+          age: '6'
+        },
+        {
+          name: 'Adam',
+          age: '7'
+        }
+      ], callbackEnd);
     }
 
     function callbackEnd() {
       console.log('Done :)');
+
       console.log('cPeople.JSON: ', cPeople.JSON);
       console.log('cPeople.JSON[0].listKid.JSON: ', cPeople.JSON[0].listKid.JSON);
 

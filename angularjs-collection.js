@@ -18,7 +18,7 @@ var Collection = function Collection(objOption) {
         filter: undefined,
         default: undefined,
         callback: undefined,
-        idLink: undefined,
+        idLink: -1,
         debug: false
       };
 
@@ -53,7 +53,11 @@ var Collection = function Collection(objOption) {
         that.log('Tabels Are Created for Collection. Load existing collection from webSQL if any.');
         that.addCollToMasterTable(that.nameCollection, that.modelDefault, function() {
           // Load existing collection from webSQL if any
-          that.JSON = that.loadCollectionFromWebsql('c_'+that.nameCollection, that.opt.filter);
+          if(that.opt.idLink === -1) {
+            that.JSON = that.loadCollectionFromWebsql('c_'+that.nameCollection, that.opt.filter);
+          } else {
+            that.JSON = that.loadCollectionFromWebsql('c_'+that.nameCollection, 'idLink='+that.opt.idLink);
+          }
         });
       });
     });
@@ -61,7 +65,11 @@ var Collection = function Collection(objOption) {
     //todo: check if the collection exist in db
 
     that.loadDefaultModelFromWebsql(function () {
-      that.JSON = that.loadCollectionFromWebsql('c_'+that.nameCollection, that.opt.filter);
+      if(that.opt.idLink === -1) {
+        that.JSON = that.loadCollectionFromWebsql('c_'+that.nameCollection, that.opt.filter);
+      } else {
+        that.JSON = that.loadCollectionFromWebsql('c_'+that.nameCollection, 'idLink='+that.opt.idLink);
+      }
     });
 
 //    that.JSON = that.loadCollectionFromWebsql('c_'+that.nameCollection, that.opt.filter);
@@ -248,7 +256,8 @@ Collection.prototype.addCollToMasterTable = function(nameCollection, modelDefaul
 Collection.prototype.add = function (model, callback) {
   var that = this,
       keyDimension = that.nameCollection,
-      JSONtemp = {};
+      JSONtemp = {},
+      idLink = that.opt.idLink;
 
   var runner = new that.asyncRunner();
 
@@ -266,6 +275,7 @@ Collection.prototype.add = function (model, callback) {
   checkRecursively(model, that.modelDefault, keyDimension, {JSONCurrentDim: JSONtemp});
   that.log('temp/add: runner.listCmd', runner.listCmd);
 
+  runner.listCmd.reverse();
   runner.run();
 
   function checkRecursively(modelTargetDim, modelDefaultTargetDim, keyDimension, linkToPrevDimJSONKey) {
@@ -323,11 +333,13 @@ Collection.prototype.add = function (model, callback) {
       }
 
     });
-    sqlInsert += ' (' + listKey.join(',') + ') VALUES ("' + listValue.join('","') + '");';
+    sqlInsert += ' (idLink, ' + listKey.join(',') + ') VALUES (@replaceMe@, "' + listValue.join('","') + '");';
     that.log('temp/add: sqlInsert', sqlInsert);
 
     runner.schedule(function (resolve) {
       var callback = function (results) {
+        idLink = results.insertId;
+
         // Add current dim obj to source in prev dim obj
         var key = linkToPrevDimJSONKey.key,
           JSONPrevDim = linkToPrevDimJSONKey.JSONCurrentDim;
@@ -352,8 +364,7 @@ Collection.prototype.add = function (model, callback) {
           var value = JSONCurrentDim[key]+'';
 
           if(value.indexOf('collectionType(@)') !== -1) {
-            var nameCollection = value.split('(@)')[1],
-                idLink = JSONCurrentDim.id;
+            var nameCollection = value.split('(@)')[1];
 
             runnerSubColl.schedule(function(resolveSubColl){
               JSONCurrentDim[key] = new Collection({
@@ -369,9 +380,10 @@ Collection.prototype.add = function (model, callback) {
         });
 
         runnerSubColl.run();
-
-//        resolve();
       };
+
+      JSONCurrentDim.idLink = idLink;
+      sqlInsert = sqlInsert.replace('@replaceMe@', idLink);
 
       websql.run(sqlInsert, undefined, callback);
     });
