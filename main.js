@@ -211,7 +211,8 @@ app.controller('AppCtrl', function () {
           },
           listKid: 'collectionType_kid'
         },
-        callback: addModelToPeople,
+//        callback: addModelToPeople,
+        callback: callbackEnd,
         debug: true
       });
     }
@@ -259,6 +260,7 @@ app.controller('AppCtrl', function () {
 //
     function callbackEnd() {
       console.log('Done :)');
+      console.log('cPeople.JSON: ', cPeople.JSON);
     }
   }();
   var cleanUp =  function () {
