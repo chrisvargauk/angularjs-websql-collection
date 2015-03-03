@@ -234,7 +234,6 @@ Collection.prototype.addCollToMasterTable = function(nameCollection, modelDefaul
 Collection.prototype.add = function (model, callback) {
   var that = this,
       keyDimension = that.nameCollection,
-      listCmd = [],
       JSONtemp = {};
 
   var runner = new that.asyncRunner();
@@ -248,18 +247,8 @@ Collection.prototype.add = function (model, callback) {
     }
   });
 
-  var listCmdAllDimension = checkRecursively(model, that.modelDefault, keyDimension, {JSONCurrentDim: JSONtemp});
-  that.log('temp/add: listCmdAllDimension', listCmdAllDimension);
-  that.log('temp/add: ^^^^^^^^^^^^^^^^^^ runner.listCmd', runner.listCmd);
-
-//  that.executeCommandList(listCmdAllDimension, function () {
-//    that.log('temp/add: Collections dimensions(key-value pairs) are inserted into relevant tables.');
-//
-//    that.JSON.push(JSONtemp);
-//    if (typeof callback === "function") {
-//      callback();
-//    }
-//  });
+  checkRecursively(model, that.modelDefault, keyDimension, {JSONCurrentDim: JSONtemp});
+  that.log('temp/add: runner.listCmd', runner.listCmd);
 
   runner.run();
 
@@ -321,12 +310,12 @@ Collection.prototype.add = function (model, callback) {
     });
     sqlInsert += ' (' + listKey.join(',') + ') VALUES ("' + listValue.join('","') + '");';
     that.log('temp/add: sqlInsert', sqlInsert);
-    listCmd.push({
-      sql: sqlInsert,
-      callback: function (results) {
+
+    runner.schedule(function (resolve) {
+      var callback = function (results) {
         // Add current dim obj to source in prev dim obj
         var key = linkToPrevDimJSONKey.key,
-            JSONPrevDim = linkToPrevDimJSONKey.JSONCurrentDim;
+          JSONPrevDim = linkToPrevDimJSONKey.JSONCurrentDim;
 
         // if key is not defined than that is root
         if (!that.isUndefined(key)) {
@@ -352,31 +341,12 @@ Collection.prototype.add = function (model, callback) {
 //            });
 //          }
 //        });
-      }
-    });
-
-    runner.schedule(function (resolve) {
-      var callback = function (results) {
-        // Add current dim obj to source in prev dim obj
-        var key = linkToPrevDimJSONKey.key,
-          JSONPrevDim = linkToPrevDimJSONKey.JSONCurrentDim;
-
-        // if key is not defined than that is root
-        if (!that.isUndefined(key)) {
-          JSONCurrentDim.id = results.insertId;
-          JSONPrevDim[key] = JSONCurrentDim;
-        } else {
-          JSONCurrentDim.id = results.insertId;
-          JSONtemp = JSONCurrentDim;
-        }
 
         resolve();
       };
 
       websql.run(sqlInsert, undefined, callback);
     });
-
-    return listCmd;
   }
 
   function compareObj(model, modelDefault) {
