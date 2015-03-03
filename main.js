@@ -210,7 +210,6 @@ app.controller('AppCtrl', function () {
           },
           listKid: 'collectionType_kid'
         },
-        filter: 'id < 4',
         callback: addModelToPeople,
         debug: true
       });
@@ -262,8 +261,10 @@ app.controller('AppCtrl', function () {
     }
   }();
   var cleanUp =  function () {
+//    Collection.prototype.deleteWebSQL('kid');
     Collection.prototype.deleteWebSQL('people');
     websql.emptyTable('master');
+//    websql.deleteTable('c_kid');
   };
 
 

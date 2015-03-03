@@ -237,10 +237,9 @@ Collection.prototype.add = function (model, callback) {
       listCmd = [],
       JSONtemp = {};
 
-  var listCmdAllDimension = checkRecursively(model, that.modelDefault, keyDimension, {JSONCurrentDim: JSONtemp});
-  that.log('temp/add: listCmdAllDimension', listCmdAllDimension);
+  var runner = new that.asyncRunner();
 
-  that.executeCommandList(listCmdAllDimension, function () {
+  runner.done(function () {
     that.log('temp/add: Collections dimensions(key-value pairs) are inserted into relevant tables.');
 
     that.JSON.push(JSONtemp);
@@ -248,6 +247,21 @@ Collection.prototype.add = function (model, callback) {
       callback();
     }
   });
+
+  var listCmdAllDimension = checkRecursively(model, that.modelDefault, keyDimension, {JSONCurrentDim: JSONtemp});
+  that.log('temp/add: listCmdAllDimension', listCmdAllDimension);
+  that.log('temp/add: ^^^^^^^^^^^^^^^^^^ runner.listCmd', runner.listCmd);
+
+//  that.executeCommandList(listCmdAllDimension, function () {
+//    that.log('temp/add: Collections dimensions(key-value pairs) are inserted into relevant tables.');
+//
+//    that.JSON.push(JSONtemp);
+//    if (typeof callback === "function") {
+//      callback();
+//    }
+//  });
+
+  runner.run();
 
   function checkRecursively(modelTargetDim, modelDefaultTargetDim, keyDimension, linkToPrevDimJSONKey) {
     var JSONCurrentDim = {};
@@ -339,6 +353,27 @@ Collection.prototype.add = function (model, callback) {
 //          }
 //        });
       }
+    });
+
+    runner.schedule(function (resolve) {
+      var callback = function (results) {
+        // Add current dim obj to source in prev dim obj
+        var key = linkToPrevDimJSONKey.key,
+          JSONPrevDim = linkToPrevDimJSONKey.JSONCurrentDim;
+
+        // if key is not defined than that is root
+        if (!that.isUndefined(key)) {
+          JSONCurrentDim.id = results.insertId;
+          JSONPrevDim[key] = JSONCurrentDim;
+        } else {
+          JSONCurrentDim.id = results.insertId;
+          JSONtemp = JSONCurrentDim;
+        }
+
+        resolve();
+      };
+
+      websql.run(sqlInsert, undefined, callback);
     });
 
     return listCmd;
