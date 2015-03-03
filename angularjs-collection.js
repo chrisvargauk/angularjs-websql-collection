@@ -238,6 +238,8 @@ Collection.prototype.add = function (model, callback) {
 
   var runner = new that.asyncRunner();
 
+  window.runner = runner;
+
   runner.done(function () {
     that.log('temp/add: Collections dimensions(key-value pairs) are inserted into relevant tables.');
 
@@ -326,23 +328,34 @@ Collection.prototype.add = function (model, callback) {
           JSONtemp = JSONCurrentDim;
         }
 
-        // Turn marks to collections on current dimension
-//        Object.keys(JSONCurrentDim).forEach(function (key) {
-//          var value = JSONCurrentDim[key]+'';
-//
-//          if(value.indexOf('collectionType(@)') !== -1) {
-//            var nameCollection = value.split('(@)')[1];
-//
-//            JSONCurrentDim[key] = new Collection({
-//              type: nameCollection,
-//              debug: that.opt.debug,
-//              callback: function () {
-//              }
-//            });
-//          }
-//        });
+        var runnerSubColl = new that.asyncRunner();
 
-        resolve();
+        runnerSubColl.done(function () {
+          resolve();
+        });
+
+        //Turn marks to collections on current dimension
+        Object.keys(JSONCurrentDim).forEach(function (key) {
+          var value = JSONCurrentDim[key]+'';
+
+          if(value.indexOf('collectionType(@)') !== -1) {
+            var nameCollection = value.split('(@)')[1];
+
+            runnerSubColl.schedule(function(resolveSubColl){
+              JSONCurrentDim[key] = new Collection({
+                type: nameCollection,
+                debug: that.opt.debug,
+                callback: function() {
+                  resolveSubColl();
+                }
+              });
+            });
+          }
+        });
+
+        runnerSubColl.run();
+
+//        resolve();
       };
 
       websql.run(sqlInsert, undefined, callback);
@@ -665,6 +678,10 @@ Collection.prototype.asyncRunner.prototype.schedule = function (cmd) {
 Collection.prototype.asyncRunner.prototype.run = function () {
   var that = this;
   var resolve = function resolve() {
+    if (that.listCmd.length === 0) {
+      that.callbackEnd();
+    }
+
     // Set status = 'done' to prev cmd if any
     if (typeof that.cmdRunning !== 'undefined') {
       that.cmdRunning.status = 'done';

@@ -170,7 +170,8 @@ app.controller('AppCtrl', function () {
     }
 
 //    cleanUp();
-    createCollectionKid();
+//    createCollectionKid();
+    createCollectionPeople();
 
     function createCollectionKid() {
       window.cKid = new Collection({
@@ -316,6 +317,57 @@ app.controller('AppCtrl', function () {
       setTimeout(function (){
         console.log('hehe');
         resolve();
+      }, 1000);
+    });
+
+    runner.schedule(function (resolve) {
+      setTimeout(function (){
+        console.log('hihi');
+        resolve();
+      }, 1000);
+    });
+
+    runner.run();
+  };
+
+  /* AsyncRunner - 0 command still trigger callbackEdn */
+  var sc = function () {
+    var runner = new Collection.prototype.asyncRunner();
+
+    runner.done(function () {
+      console.log('All commands are done :)');
+    });
+
+    runner.run();
+  };
+
+  /* AsyncRunner - AsyncRunner in AsyncRunner*/
+  var sc = function () {
+    var runner = new Collection.prototype.asyncRunner();
+
+    runner.done(function () {
+      console.log('All commands are done :)');
+    });
+
+    runner.schedule(function (resolve) {
+      setTimeout(function (){
+        console.log('hehe');
+
+        var runnerSub = new Collection.prototype.asyncRunner();
+
+        runnerSub.done(function () {
+          console.log('All SUB commands are done :]');
+          resolve();
+        });
+
+        runnerSub.schedule(function (resolve) {
+          setTimeout(function (){
+            console.log('haha');
+            resolve();
+          }, 1000);
+        });
+
+        runnerSub.run();
       }, 1000);
     });
 
