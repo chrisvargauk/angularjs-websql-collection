@@ -45,9 +45,8 @@ app.controller('AppCtrl', function () {
     }
 
     function runScenario() {
-      console.log('ehehehehhehhehe');
       websql.getListTable(function(listTable) {
-        scRunner.log('listTable:', listTable);
+//        scRunner.log('listTable:', listTable);
 
         sc.test('Table "c_people" was created.')
           .check(listTable.indexOf('c_people'))
@@ -194,12 +193,11 @@ app.controller('AppCtrl', function () {
         type: 'people',
         filter: 'id < 4',
         callback: runScenario,
-        debug: true
+        debug: false
       });
     }
 
     function runScenario () {
-      console.log('hehe :)');
       sc.test('JSON is loaded properly - check window.cPeopleNew.JSON[0].name')
         .check(window.cPeopleNew.JSON[0].name)
         .equalTo("John");
@@ -224,27 +222,9 @@ app.controller('AppCtrl', function () {
       });
     }
   });
-//  scRunner.run('all');
-  scRunner.run('load multi-dim collection from database');
-  var sc = function () {
-    window.people = new Collection({
-      type: 'people',
-      filter: 'id < 4',
-      callback: callback,
-      debug: true
-    });
+  scRunner.run('all');
 
-    function callback() {
-      console.log('Done :)');
-      console.log('people.JSON:', people.JSON);
-    }
-  };
-  var cleanUp =  function () {
-    Collection.prototype.deleteWebSQL('people');
-    websql.emptyTable('master');
-  };
-
-  /* collection: create multi-dim collection then add a list of models
+  /* collection: add List of Models: create multi-dim collection then add a list of models
    *  Create table structure according to multi-dimensional obj structure,
    *  then add a list of model at one.
    * */
