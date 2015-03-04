@@ -18,10 +18,16 @@ app.controller('AppCtrl', function () {
   *  Create table structure according to multi-dimensional obj structure.
   * */
   scRunner.add('create multi-dim collection', function (sc) {
-    creteCollectionPeople();
+    cleanUpBefore();
+
+    function cleanUpBefore() {
+      Collection.prototype.deleteWebSQL('people', function () {
+        websql.deleteTable('master', creteCollectionPeople);
+      });
+    }
 
     function creteCollectionPeople() {
-      window.people = new Collection({
+      window.cPeople = new Collection({
         type: 'people',
         default: {
           name: 'John',
@@ -39,6 +45,7 @@ app.controller('AppCtrl', function () {
     }
 
     function runScenario() {
+      console.log('ehehehehhehhehe');
       websql.getListTable(function(listTable) {
         scRunner.log('listTable:', listTable);
 
@@ -54,14 +61,15 @@ app.controller('AppCtrl', function () {
           .check(listTable.indexOf('master'))
           .notEqualTo(-1);
 
-        cleanUp();
+        cleanUpAfter();
       });
     }
 
-    function cleanUp() {
+    function cleanUpAfter() {
       Collection.prototype.deleteWebSQL('people', function () {
-        websql.deleteTable('master');
-        sc.resolve();
+        websql.deleteTable('master', function () {
+          sc.resolve();
+        });
       });
     }
   });
@@ -71,28 +79,34 @@ app.controller('AppCtrl', function () {
    *  then add a model in it.
    * */
   scRunner.add('create multi-dim collection then add model', function (sc) {
-//    sc.resolve();
-  });
-  scRunner.run('all');
-  var sc = function () {
-    window.people = new Collection({
-      type: 'people',
-      default: {
-        name: 'John',
-        age: '12',
-        address: {
-          line1: '93. Meridian place',
-          line2: 'London',
-          postCode: 'E14 9FF'
-        }
-      },
-      filter: 'id < 4',
-      callback: addModelToPeople,
-      debug: true
-    });
+    cleanUpBefore();
+
+    function cleanUpBefore() {
+      Collection.prototype.deleteWebSQL('people', function () {
+        websql.deleteTable('master', creteCollectionPeople);
+      });
+    }
+
+    function creteCollectionPeople() {
+      window.cPeople = new Collection({
+        type: 'people',
+        default: {
+          name: 'John',
+          age: '12',
+          address: {
+            line1: '93. Meridian place',
+            line2: 'London',
+            postCode: 'E14 9FF'
+          }
+        },
+        filter: 'id < 4',
+        callback: addModelToPeople,
+        debug: false
+      });
+    }
 
     function addModelToPeople() {
-      window.peopel.add({
+      window.cPeople.add({
         name: 'John',
         age: 12,
         address: {
@@ -100,25 +114,118 @@ app.controller('AppCtrl', function () {
           line2: 'London',
           postCode: 'E14 9FF'
         }
-      }, callback);
+      }, runScenario);
     }
 
-    function callback () {
-      console.log('hehe :)');
-    }
-  };
-  var cleanUp =  function () {
-    Collection.prototype.deleteWebSQL('people');
-    websql.emptyTable('master');
-  };
+    function runScenario () {
+      sc.test('JSON is loaded properly - check window.cPeople.JSON[0].name')
+        .check(window.cPeople.JSON[0].name)
+        .equalTo("John");
+      sc.test('JSON is loaded properly - check window.cPeople.JSON[0].address.line2')
+        .check(window.cPeople.JSON[0].address.line2)
+        .equalTo("London");
+      sc.test('JSON is loaded properly - check idLink on main dimension, should be -1')
+        .check(window.cPeople.JSON[0].idLink)
+        .equalTo(-1);
+      sc.test('JSON is loaded properly - check idLink main and sub dimensions. Sub idLink == main id.')
+        .check(window.cPeople.JSON[0].address.idLink)
+        .equalTo(window.cPeople.JSON[0].id);
 
-  /* collection: create multi-dim collection and check whether properties are loaded.
+      cleanUpAfter();
+    }
+
+    function cleanUpAfter() {
+      Collection.prototype.deleteWebSQL('people', function () {
+        websql.deleteTable('master', function () {
+          sc.resolve();
+        });
+      });
+    }
+  });
+
+  /* collection: load multi-dim collection from database.
    *  Create table structure according to multi-dimensional obj structure.
    *  If there are properties saved to WebSQL than they will be loaded back for the collection.
    *
    *  Note: You need a model already being added to collection, otherwise there is nothing to add,
    *        run one of the scenarios that adds model to collection.
    * */
+  scRunner.add('load multi-dim collection from database', function (sc) {
+    cleanUpBefore();
+
+    function cleanUpBefore() {
+      Collection.prototype.deleteWebSQL('people', function () {
+        websql.deleteTable('master', creteCollectionPeople);
+      });
+    }
+
+    function creteCollectionPeople() {
+      window.cPeople = new Collection({
+        type: 'people',
+        default: {
+          name: 'John',
+          age: '12',
+          address: {
+            line1: '93. Meridian place',
+            line2: 'London',
+            postCode: 'E14 9FF'
+          }
+        },
+        filter: 'id < 4',
+        callback: addModelToPeople,
+        debug: false
+      });
+    }
+
+    function addModelToPeople() {
+      window.cPeople.add({
+        name: 'John',
+        age: 12,
+        address: {
+          line1: '93. Meridian place',
+          line2: 'London',
+          postCode: 'E14 9FF'
+        }
+      }, creteCollectionPeopleNew);
+    }
+
+    function creteCollectionPeopleNew() {
+      window.cPeopleNew = new Collection({
+        type: 'people',
+        filter: 'id < 4',
+        callback: runScenario,
+        debug: true
+      });
+    }
+
+    function runScenario () {
+      console.log('hehe :)');
+      sc.test('JSON is loaded properly - check window.cPeopleNew.JSON[0].name')
+        .check(window.cPeopleNew.JSON[0].name)
+        .equalTo("John");
+      sc.test('JSON is loaded properly - check window.cPeopleNew.JSON[0].address.line2')
+        .check(window.cPeopleNew.JSON[0].address.line2)
+        .equalTo("London");
+      sc.test('JSON is loaded properly - check idLink on main dimension, should be -1')
+        .check(window.cPeopleNew.JSON[0].idLink)
+        .equalTo(-1);
+      sc.test('JSON is loaded properly - check idLink main and sub dimensions. Sub idLink == main id.')
+        .check(window.cPeopleNew.JSON[0].address.idLink)
+        .equalTo(window.cPeopleNew.JSON[0].id);
+
+      cleanUpAfter();
+    }
+
+    function cleanUpAfter() {
+      Collection.prototype.deleteWebSQL('people', function () {
+        websql.deleteTable('master', function () {
+          sc.resolve();
+        });
+      });
+    }
+  });
+//  scRunner.run('all');
+  scRunner.run('load multi-dim collection from database');
   var sc = function () {
     window.people = new Collection({
       type: 'people',
