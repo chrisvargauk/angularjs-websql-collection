@@ -4,9 +4,10 @@
 // Done: - add idCollectionLink to every single table
 // Done: collection.empty, collection.deleteTables, collection.update
 // Done: Sync JSON
-// Todo: Collection.removeById
-// Todo: collectionInstance.remove
+// Done: collectionInstance.removeById
+// Todo: model.remove
 // Todo: collectionInstance.update
+// Todo: deleteTable: dont throw error if table doesnt exist
 
 var app = angular.module('app', []);
 
@@ -277,6 +278,8 @@ app.controller('AppCtrl', function () {
     websql.deleteTable('c_kid');
   };
 
+  /* collection: remove model to collection
+  * */
   var sc = function () {
     cleanUp();
 
@@ -397,20 +400,57 @@ app.controller('AppCtrl', function () {
       console.log('opt in Kid in first cPeople: ', optFirst);
       console.log('opt in Kid in last cPeople: ', optLast);
 
-//      Collection.prototype.removeById('people', 2, function () {
-//        console.log('All people related entries given by id in db should be deleted by now.');
-//      });
-
       cPeople.removeById('people', 2, function () {
         console.log('All people related entries given by id in db should be deleted by now.');
       });
     }
-  }();
+  };
   var cleanUp =  function () {
     Collection.prototype.deleteWebSQL('kid', function () {
       Collection.prototype.deleteWebSQL('people', createCollectionKid());
     });
   };
+
+  /* Collection: Update collection */
+  var sc = function () {
+    cleanUp();
+
+    function cleanUp() {
+//      Collection.prototype.deleteWebSQL('people', function () {
+//        Collection.prototype.deleteWebSQL('kid');
+//      });
+      Collection.prototype.deleteWebSQL('kid', function () {
+        websql.emptyTable('master', createCollectionKid);
+      });
+    }
+
+    function createCollectionKid() {
+      window.cKid = new Collection({
+        type: 'kid',
+        default: {
+          name: 'Melissa',
+          age: '6'
+        },
+        callback: addListToKid,
+        debug: true
+      });
+    }
+
+    function addListToKid() {
+      window.cKid.addArray([
+        {
+          name: 'Melissa',
+          age: '6'
+        }
+      ], callbackEnd);
+    }
+
+    function callbackEnd() {
+      console.log('End of all operation');
+    }
+
+    console.log('update');
+  }();
 
 
 
