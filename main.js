@@ -186,7 +186,7 @@ app.controller('AppCtrl', function () {
           name: 'Melissa',
           age: '6'
         },
-        callback: createCollectionPeople,
+        callback: addListToKid,
         debug: true
       });
     }
@@ -196,10 +196,6 @@ app.controller('AppCtrl', function () {
         {
           name: 'Melissa',
           age: '6'
-        },
-        {
-          name: 'James',
-          age: '8'
         }
       ], createCollectionPeople);
     }
@@ -248,24 +244,6 @@ app.controller('AppCtrl', function () {
 
     // todo: create a Collection instance programmatically to array but dont add the array just yet.
 
-//    window.people = new Collection({
-//      type: 'people',
-//      default: {
-//        name: 'John',
-//        age: '12',
-//        address: {
-//          line1: '93. Meridian place',
-//          line2: 'London',
-//          postCode: 'E14 9FF'
-//        },
-//        listKid: 'collectionType_kid'
-//      },
-//      filter: 'id < 4',
-//      callback: callback,
-//      debug: true
-//    });
-//
-
     function addToKidInCollPeople() {
       var size = cPeople.JSON.length;
       cPeople.JSON[size-1].listKid.addArray([
@@ -291,12 +269,147 @@ app.controller('AppCtrl', function () {
       console.log('opt in Kid in first cPeople: ', optFirst);
       console.log('opt in Kid in last cPeople: ', optLast);
     }
-  }();
+  };
   var cleanUp =  function () {
 //    Collection.prototype.deleteWebSQL('kid');
     Collection.prototype.deleteWebSQL('people');
     websql.emptyTable('master');
     websql.deleteTable('c_kid');
+  };
+
+  var sc = function () {
+    cleanUp();
+
+    function cleanUp() {
+      Collection.prototype.deleteWebSQL('kid', function () {
+        Collection.prototype.deleteWebSQL('people', createCollectionKid());
+      });
+    }
+
+    function createCollectionKid() {
+      window.cKid = new Collection({
+        type: 'kid',
+        default: {
+          name: 'Melissa',
+          age: '6'
+        },
+        callback: addListToKid,
+        debug: true
+      });
+    }
+
+    function addListToKid() {
+      window.cKid.addArray([
+        {
+          name: 'Melissa',
+          age: '6'
+        }
+      ], createCollectionPeople);
+    }
+
+    function createCollectionPeople() {
+      window.cPeople = new Collection({
+        type: 'people',
+        default: {
+          name: 'John',
+          age: '12',
+          address: {
+            line1: '93. Meridian place',
+            line2: 'London',
+            postCode: 'E14 9FF'
+          },
+          listKid: 'collectionType_kid'
+        },
+        callback: addModelToPeople,
+//        callback: callbackEnd,
+        debug: true
+      });
+    }
+
+    function addModelToPeople() {
+      window.cPeople.addArray([
+        {
+          name: 'John',
+          age: 12,
+          address: {
+            line1: '93. Meridian place',
+            line2: 'London',
+            postCode: 'E14 9FF'
+          },
+          listKid: [
+            {
+              name: 'Melissa',
+              age: 6
+            },
+            {
+              name: 'Jeff',
+              age: 5
+            }
+          ]
+        },
+        {
+          name: 'Jane',
+          age: 11,
+          address: {
+            line1: '72. Woodlane',
+            line2: 'London',
+            postCode: 'EW4 45'
+          },
+          listKid: [
+            {
+              name: 'Melissa',
+              age: 6
+            },
+            {
+              name: 'Jeff',
+              age: 5
+            }
+          ]
+        }
+      ], addToKidInCollPeople);
+//      }, callbackEnd);
+    }
+
+    // todo: create a Collection instance programmatically to array but dont add the array just yet.
+
+    function addToKidInCollPeople() {
+      var size = cPeople.JSON.length;
+      cPeople.JSON[size-1].listKid.addArray([
+        {
+          name: 'Steve',
+          age: '6'
+        },
+        {
+          name: 'Adam',
+          age: '7'
+        }
+      ], callbackEnd);
+    }
+
+    function callbackEnd() {
+      console.log('Done :)');
+
+      console.log('cPeople.JSON: ', cPeople.JSON);
+      var size = cPeople.JSON.length,
+        optLast = cPeople.JSON[size-1].listKid.opt,
+        optFirst = cPeople.JSON[0].listKid.opt;
+
+      console.log('opt in Kid in first cPeople: ', optFirst);
+      console.log('opt in Kid in last cPeople: ', optLast);
+
+//      Collection.prototype.removeById('people', 2, function () {
+//        console.log('All people related entries given by id in db should be deleted by now.');
+//      });
+
+      cPeople.removeById('people', 2, function () {
+        console.log('All people related entries given by id in db should be deleted by now.');
+      });
+    }
+  }();
+  var cleanUp =  function () {
+    Collection.prototype.deleteWebSQL('kid', function () {
+      Collection.prototype.deleteWebSQL('people', createCollectionKid());
+    });
   };
 
 

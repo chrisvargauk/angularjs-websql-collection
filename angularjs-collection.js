@@ -453,6 +453,113 @@ Collection.prototype.addArray = function (listModel, callback) {
   }
 };
 
+Collection.prototype.removeById = function (nameCollection, idToRemove, callbackEnd) {
+  console.log('Collection.removeById(): Remove id:', idToRemove);
+
+  var that = this;
+
+  if (that.isUndefined(nameCollection)) {
+    throw "Collection.removeById(): nameCollection is required.";
+  }
+
+  if (that.isUndefined(idToRemove)) {
+    throw "Collection.removeById(): removeById is required.";
+  }
+
+  that.ifNOTInDB('c_'+nameCollection, "id='"+idToRemove+"'", function() {
+    throw 'Collection.removeById: id "'+idToRemove+'" is NOT in Collection "'+nameCollection+'" table.';
+  });
+
+  that.ifInDB('c_'+nameCollection, "id='"+idToRemove+"'", function(ctr, listItem) {
+    var item = listItem[0];
+
+    console.log('Collection.removeById(): item: ', item);
+
+    var listSql = [],
+        ctrDimCrawler = 0;
+    var sqlDeleteDim = "DELETE FROM c_" + nameCollection + " WHERE id=" + idToRemove;
+    listSql.push(sqlDeleteDim);
+
+    recursiveCrawler('c_'+nameCollection, 'id='+idToRemove, function() {
+
+    });
+
+    function recursiveCrawler(nameCollection, filter, callback) {
+      var sql = "SELECT * FROM '"+nameCollection+"' WHERE "+filter;
+
+      websql.run(sql, function (item) {
+        var idCurrent
+
+        Object.keys(item).forEach(function (key) {
+          var value = item[key]+'';
+
+          console.log('Collection.removeById(): '+nameCollection+'['+key+']: ', value);
+
+          if (key === 'id') {
+            idCurrent = value;
+          }
+
+          if (value.indexOf('nameTable(@)') !== -1) {
+            var nameCollNext = value.split('(@)')[1];
+            console.log('Collection.removeById(): nameCollNext: ', nameCollNext);
+            var sqlDeleteDim = "DELETE FROM " + nameCollNext + " WHERE idLink=" + idCurrent;
+            listSql.push(sqlDeleteDim);
+            ctrDimCrawler++;
+            recursiveCrawler(nameCollNext, 'idLink='+idCurrent, function () {
+              ctrDimCrawler--;
+            });
+          }
+
+          if (value.indexOf('collectionType(@)') !== -1) {
+            var nameCollNext = value.split('(@)')[1];
+            console.log('Collection.removeById(): nameCollNext: ', nameCollNext);
+            var sqlDeleteDim = "DELETE FROM c_" + nameCollNext + " WHERE idLink=" + idCurrent;
+            listSql.push(sqlDeleteDim);
+            ctrDimCrawler++;
+            recursiveCrawler('c_'+nameCollNext, 'idLink='+idCurrent, function () {
+              ctrDimCrawler--;
+            });
+          }
+        });
+      }, function () {
+        if (typeof callback === 'function') {
+          callback();
+        }
+
+        if (ctrDimCrawler === 0) {
+          console.log('Collection.removeById(): Recursion end.');
+          console.log('Collection.removeById(): listSql: ', listSql);
+
+          executeSqlList(listSql, callbackEnd);
+        }
+      });
+    }
+
+    function executeSqlList(listSql, callback) {
+      that.executeSqlQueryList(listSql, function() {
+        removeFromJSON();
+        callback();
+      });
+    }
+
+    function removeFromJSON () {
+      var indexModelToRemove = -1;
+      for (var index in that.JSON) {
+        var model = that.JSON[index];
+        if (model.id == idToRemove) {
+          indexModelToRemove = parseInt(index);
+        }
+      }
+
+      if (indexModelToRemove !== -1) {
+        that.JSON.splice(indexModelToRemove, 1);
+      }
+
+      console.log('Collection.removeById(): model is removed from JSON as well.');
+    }
+  });
+};
+
 Collection.prototype.log = function (msg, obj) {
   var that = this;
 
