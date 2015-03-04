@@ -18,13 +18,7 @@ app.controller('AppCtrl', function () {
   *  Create table structure according to multi-dimensional obj structure.
   * */
   scRunner.add('create multi-dim collection', function (sc) {
-    cleanUp();
-
-    function cleanUp() {
-      Collection.prototype.deleteWebSQL('people', function () {
-        websql.emptyTable('master', creteCollectionPeople);
-      });
-    }
+    creteCollectionPeople();
 
     function creteCollectionPeople() {
       window.people = new Collection({
@@ -39,12 +33,12 @@ app.controller('AppCtrl', function () {
           }
         },
         filter: 'id < 4',
-        callback: callbackEnd,
+        callback: runScenario,
         debug: false
       });
     }
 
-    function callbackEnd() {
+    function runScenario() {
       websql.getListTable(function(listTable) {
         scRunner.log('listTable:', listTable);
 
@@ -59,16 +53,27 @@ app.controller('AppCtrl', function () {
         sc.test('Table "master" was created.')
           .check(listTable.indexOf('master'))
           .notEqualTo(-1);
+
+        cleanUp();
+      });
+    }
+
+    function cleanUp() {
+      Collection.prototype.deleteWebSQL('people', function () {
+        websql.deleteTable('master');
+        sc.resolve();
       });
     }
   });
-
-  scRunner.run('all');
 
   /* collection: create multi-dim collection then add model
    *  Create table structure according to multi-dimensional obj structure,
    *  then add a model in it.
    * */
+  scRunner.add('create multi-dim collection then add model', function (sc) {
+//    sc.resolve();
+  });
+  scRunner.run('all');
   var sc = function () {
     window.people = new Collection({
       type: 'people',
