@@ -416,11 +416,10 @@ app.controller('AppCtrl', function () {
     cleanUp();
 
     function cleanUp() {
-//      Collection.prototype.deleteWebSQL('people', function () {
-//        Collection.prototype.deleteWebSQL('kid');
-//      });
-      Collection.prototype.deleteWebSQL('kid', function () {
-        websql.emptyTable('master', createCollectionKid);
+      Collection.prototype.deleteWebSQL('people', function () {
+        Collection.prototype.deleteWebSQL('kid', function () {
+          websql.emptyTable('master', createCollectionKid);
+        });
       });
     }
 
@@ -442,7 +441,70 @@ app.controller('AppCtrl', function () {
           name: 'Melissa',
           age: '6'
         }
+      ], createCollectionPeople);
+    }
+
+    function createCollectionPeople() {
+      window.cPeople = new Collection({
+        type: 'people',
+        default: {
+          name: 'John',
+          age: '12',
+          address: {
+            line1: '93. Meridian place',
+            line2: 'London',
+            postCode: 'E14 9FF'
+          },
+          listKid: 'collectionType_kid'
+        },
+        callback: addModelToPeople,
+//        callback: callbackEnd,
+        debug: true
+      });
+    }
+
+    function addModelToPeople() {
+      window.cPeople.addArray([
+        {
+          name: 'John',
+          age: 12,
+          address: {
+            line1: '93. Meridian place',
+            line2: 'London',
+            postCode: 'E14 9FF'
+          },
+          listKid: [
+            {
+              name: 'Melissa',
+              age: 6
+            },
+            {
+              name: 'Jeff',
+              age: 5
+            }
+          ]
+        },
+        {
+          name: 'Jane',
+          age: 11,
+          address: {
+            line1: '72. Woodlane',
+            line2: 'London',
+            postCode: 'EW4 45'
+          },
+          listKid: [
+            {
+              name: 'Melissa',
+              age: 6
+            },
+            {
+              name: 'Jeff',
+              age: 5
+            }
+          ]
+        }
       ], callbackEnd);
+//      }, callbackEnd);
     }
 
     function callbackEnd() {

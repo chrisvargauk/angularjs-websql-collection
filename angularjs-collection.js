@@ -35,6 +35,7 @@ var Collection = function Collection(objOption) {
   that.modelDefault = that.opt.default;
   that.callback = that.opt.callback;
   that.JSON = [];
+  that.JSONstateInDb = [];
   that.ctrLoadingDims = 0;
 
   // Name of the collection is always required
@@ -53,11 +54,9 @@ var Collection = function Collection(objOption) {
         that.log('Tabels Are Created for Collection. Load existing collection from webSQL if any.');
         that.addCollToMasterTable(that.nameCollection, that.modelDefault, function() {
           // Load existing collection from webSQL if any
-          if(that.opt.idLink === -1) {
-            that.JSON = that.loadCollectionFromWebsql('c_'+that.nameCollection, that.opt.filter);
-          } else {
-            that.JSON = that.loadCollectionFromWebsql('c_'+that.nameCollection, 'idLink='+that.opt.idLink);
-          }
+          that.loadCollectionFromWebsqlWrapper(function () {
+            that.opt.callback(that.JSON);
+          });
         });
       });
     });
@@ -65,11 +64,10 @@ var Collection = function Collection(objOption) {
     //todo: check if the collection exist in db
 
     that.loadDefaultModelFromWebsql(function () {
-      if(that.opt.idLink === -1) {
-        that.JSON = that.loadCollectionFromWebsql('c_'+that.nameCollection, that.opt.filter);
-      } else {
-        that.JSON = that.loadCollectionFromWebsql('c_'+that.nameCollection, 'idLink='+that.opt.idLink);
-      }
+      // Load existing collection from webSQL if any
+      that.loadCollectionFromWebsqlWrapper(function () {
+        that.opt.callback(that.JSON);
+      });
     });
 
 //    that.JSON = that.loadCollectionFromWebsql('c_'+that.nameCollection, that.opt.filter);
@@ -84,6 +82,26 @@ Collection.prototype.loadDefaultModelFromWebsql = function (callback) {
     that.modelDefault = JSON.parse(item.defaultModel);
     that.log('.loadDefaultModelFromWebsql(): modelDefault is loaded:', that.modelDefault);
   }, callback);
+};
+
+Collection.prototype.loadCollectionFromWebsqlWrapper = function (callback) {
+  var that = this;
+
+  if(that.opt.idLink === -1) {
+    that.JSON = that.loadCollectionFromWebsql('c_'+that.nameCollection, that.opt.filter, function() {
+      that.JSONstateInDb = that.copyJSON(that.JSON);
+      if (typeof callback === "function") {
+        callback();
+      }
+    });
+  } else {
+    that.JSON = that.loadCollectionFromWebsql('c_'+that.nameCollection, 'idLink='+that.opt.idLink, function() {
+      that.JSONstateInDb = that.copyJSON(that.JSON);
+      if (typeof callback === "function") {
+        callback();
+      }
+    });
+  }
 };
 
 Collection.prototype.loadCollectionFromWebsql = function (keyDimension, sqlFilter, callback) {
@@ -118,8 +136,15 @@ Collection.prototype.loadCollectionFromWebsql = function (keyDimension, sqlFilte
           idLink: item.id,
           callback: function (JSON) {
             that.ctrLoadingDims--;
-            if (typeof that.opt.callback === "function" && that.ctrLoadingDims === 0) {
-              that.opt.callback(that.JSON);
+//            if (typeof that.opt.callback === "function" && that.ctrLoadingDims === 0) {
+//              if (typeof callback === "function") {
+//                callback();
+//              }
+//
+//              that.opt.callback(that.JSON);
+//            }
+            if (typeof callback === "function" && that.ctrLoadingDims === 0) {
+              callback();
             }
           },
           debug: that.opt.debug
@@ -131,16 +156,75 @@ Collection.prototype.loadCollectionFromWebsql = function (keyDimension, sqlFilte
 
     JSON.push(currentDimension);
   }, function () {
-    if (typeof callback === "function") {
+//    if (typeof that.opt.callback === "function" && that.ctrLoadingDims === 0) {
+//      if (typeof callback === "function") {
+//        callback();
+//      }
+//
+//      that.opt.callback(that.JSON);
+//    }
+    if (typeof callback === "function" && that.ctrLoadingDims === 0) {
       callback();
-    }
-
-    if (typeof that.opt.callback === "function" && that.ctrLoadingDims === 0) {
-      that.opt.callback(that.JSON);
     }
   });
 
   return JSON;
+};
+
+Collection.prototype.copyJSON = function (JSON) {
+  var that = this,
+      JSONCopy = [];
+
+  var typeJSON = Object.prototype.toString.call(JSON);
+  if (typeJSON !== '[object Array]') {
+    that.log('JSON at Error: ', JSON);
+    throw 'Collection.copyJSON(): JSON hast to be an array. Type of object provided: ' + typeJSON;
+  }
+
+  JSON.forEach(function (model) {
+    var modelCopy = recursiveCrawler(model);
+    JSONCopy.push(modelCopy);
+  });
+
+  if (JSON.length > 0) {
+    console.log('');
+  }
+
+  function recursiveCrawler(JSONCurrnetDim) {
+    var JSONCurrentDimCopy = {};
+    Object.keys(JSONCurrnetDim).forEach(function (key) {
+      var value = JSONCurrnetDim[key],
+          type =  Object.prototype.toString.call(value);
+
+      switch(type) {
+        case '[object String]':
+          JSONCurrentDimCopy[key] = value;
+          break;
+        case '[object Number]':
+          JSONCurrentDimCopy[key] = value+'';
+          break;
+        case '[object Object]':
+          // If value has opt prop that means it is a Collection
+          if (!that.isUndefined(value.opt)) {
+            // Link the sub collection to key, dont make a duplicate of that sub collection.
+            // That collection will have its on copy of its JSON.
+            JSONCurrentDimCopy[key] = value;
+          } else {
+            JSONCurrentDimCopy[key] = recursiveCrawler(value);
+          }
+          break;
+        case '[object Array]':
+          throw "Collection.copyJSON(): Array detected in JSON.";
+          break;
+      }
+    });
+
+    return JSONCurrentDimCopy;
+  };
+
+  that.log('.copyJSON(): ********** ', JSONCopy);
+
+  return JSONCopy;
 };
 
 Collection.prototype.checkDependencies = function () {
@@ -268,6 +352,7 @@ Collection.prototype.add = function (model, callback) {
 
     that.JSON.push(JSONtemp);
     if (typeof callback === "function") {
+      that.JSONstateInDb = that.copyJSON(that.JSON);
       callback();
     }
   });
