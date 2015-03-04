@@ -17,32 +17,53 @@ app.controller('AppCtrl', function () {
   /* collection: create multi-dim collection.
   *  Create table structure according to multi-dimensional obj structure.
   * */
-  var sc = function () {
-    window.people = new Collection({
-      type: 'people',
-      default: {
-        name: 'John',
-        age: '12',
-        address: {
-          line1: '93. Meridian place',
-          line2: 'London',
-          postCode: 'E14 9FF'
-        }
-      },
-      filter: 'id < 4',
-      callback: callback,
-      debug: true
-    });
+  scRunner.add('create multi-dim collection', function (sc) {
+    cleanUp();
 
-    function callback() {
-      console.log('Done :)');
-      console.log('window.people.JSON[0].address:', window.people.JSON[0].address);
+    function cleanUp() {
+      Collection.prototype.deleteWebSQL('people', function () {
+        websql.emptyTable('master', creteCollectionPeople);
+      });
     }
-  };
-  var cleanUp =  function () {
-    Collection.prototype.deleteWebSQL('people');
-    websql.emptyTable('master');
-  };
+
+    function creteCollectionPeople() {
+      window.people = new Collection({
+        type: 'people',
+        default: {
+          name: 'John',
+          age: '12',
+          address: {
+            line1: '93. Meridian place',
+            line2: 'London',
+            postCode: 'E14 9FF'
+          }
+        },
+        filter: 'id < 4',
+        callback: callbackEnd,
+        debug: false
+      });
+    }
+
+    function callbackEnd() {
+      websql.getListTable(function(listTable) {
+        scRunner.log('listTable:', listTable);
+
+        sc.test('Table "c_people" was created.')
+          .check(listTable.indexOf('c_people'))
+          .notEqualTo(-1);
+
+        sc.test('Table "c_people_address" was created.')
+          .check(listTable.indexOf('c_people_address'))
+          .notEqualTo(-1);
+
+        sc.test('Table "master" was created.')
+          .check(listTable.indexOf('master'))
+          .notEqualTo(-1);
+      });
+    }
+  });
+
+  scRunner.run('all');
 
   /* collection: create multi-dim collection then add model
    *  Create table structure according to multi-dimensional obj structure,
@@ -512,7 +533,7 @@ app.controller('AppCtrl', function () {
     }
 
     console.log('update');
-  }();
+  };
 
 
 
