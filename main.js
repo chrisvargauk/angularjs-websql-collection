@@ -14,6 +14,7 @@ var app = angular.module('app', []);
 app.controller('AppCtrl', function () {
   console.log('Controller loaded');
 
+
   /* collection: create multi-dim collection.
   *  Create table structure according to multi-dimensional obj structure.
   * */
@@ -72,6 +73,7 @@ app.controller('AppCtrl', function () {
       });
     }
   });
+
 
   /* collection: create multi-dim collection then add model
    *  Create table structure according to multi-dimensional obj structure,
@@ -141,6 +143,7 @@ app.controller('AppCtrl', function () {
       });
     }
   });
+
 
   /* collection: load multi-dim collection from database.
    *  Create table structure according to multi-dimensional obj structure.
@@ -222,28 +225,39 @@ app.controller('AppCtrl', function () {
       });
     }
   });
-  scRunner.run('all');
 
-  /* collection: add List of Models: create multi-dim collection then add a list of models
+
+  /* collection: add List of Models to Collection
+   *  Create multi-dim collection then add a list of models.
    *  Create table structure according to multi-dimensional obj structure,
    *  then add a list of model at one.
    * */
-  var sc = function () {
-    window.people = new Collection({
-      type: 'people',
-      default: {
-        name: 'John',
-        age: '12',
-        address: {
-          line1: '93. Meridian place',
-          line2: 'London',
-          postCode: 'E14 9FF'
-        }
-      },
-      filter: 'id < 4',
-      callback: addModelToPeople,
-      debug: true
-    });
+  scRunner.add('add List of Models to Collection', function (sc) {
+    cleanUpBefore();
+
+    function cleanUpBefore() {
+      Collection.prototype.deleteWebSQL('people', function () {
+        websql.deleteTable('master', creteCollectionPeople);
+      });
+    }
+
+    function creteCollectionPeople() {
+      window.cPeople = new Collection({
+        type: 'people',
+        default: {
+          name: 'John',
+          age: '12',
+          address: {
+            line1: '93. Meridian place',
+            line2: 'London',
+            postCode: 'E14 9FF'
+          }
+        },
+        filter: 'id < 4',
+        callback: addModelToPeople,
+        debug: false
+      });
+    }
 
     function addModelToPeople() {
       var listModel = [
@@ -266,21 +280,131 @@ app.controller('AppCtrl', function () {
         }
       ];
 
-      window.people.addArray(listModel, callback);
+      window.cPeople.addArray(listModel, runScenario);
     }
 
-    function callback () {
-      console.log('hehe :)');
+    function runScenario () {
+      sc.test('1st Model\'s JSON is loaded properly in Collection - check window.cPeople.JSON[0].name')
+        .check(window.cPeople.JSON[0].name)
+        .equalTo("John");
+      sc.test('2nd Model\'s JSON is loaded properly in Collection - check window.cPeople.JSON[1].name')
+        .check(window.cPeople.JSON[1].name)
+        .equalTo("Jane");
+
+      cleanUpAfter();
     }
-  };
-  var cleanUp =  function () {
-    Collection.prototype.deleteWebSQL('people');
-    websql.emptyTable('master');
-  };
+
+    function cleanUpAfter() {
+      Collection.prototype.deleteWebSQL('people', function () {
+        websql.deleteTable('master', function () {
+          sc.resolve();
+        });
+      });
+    }
+  });
+
 
   /* collection: create multi-dim collection with other collection in it.
    *  Create table structure according to multi-dimensional obj structure.
+   *  Note: At addition, in the obj you pass in,
+   *        models in sub collection wont be added to created sub collection.
    * */
+  scRunner.add('create multi-dim collection with another other collection in it', function (sc) {
+    cleanUpBefore();
+
+    function cleanUpBefore() {
+      Collection.prototype.deleteWebSQL('kid', function () {
+        Collection.prototype.deleteWebSQL('people', function () {
+          websql.deleteTable('master', createCollectionKid);
+        });
+      });
+    }
+
+    function createCollectionKid() {
+      window.cKid = new Collection({
+        type: 'kid',
+        default: {
+          name: 'Melissa',
+          age: '6'
+        },
+        callback: addListToKid,
+        debug: false
+      });
+    }
+
+    function addListToKid() {
+      window.cKid.addArray([
+        {
+          name: 'Melissa',
+          age: '6'
+        }
+      ], creteCollectionPeople);
+    }
+
+    function creteCollectionPeople() {
+      window.cPeople = new Collection({
+        type: 'people',
+        default: {
+          name: 'John',
+          age: '12',
+          address: {
+            line1: '93. Meridian place',
+            line2: 'London',
+            postCode: 'E14 9FF'
+          },
+          listKid: 'collectionType_kid'
+        },
+        filter: 'id < 4',
+        callback: addModelToPeople,
+        debug: false
+      });
+    }
+
+    function addModelToPeople() {
+      window.cPeople.add({
+        name: 'John',
+        age: 12,
+        address: {
+          line1: '93. Meridian place',
+          line2: 'London',
+          postCode: 'E14 9FF'
+        },
+        listKid: [
+          {
+            name: 'Melissa',
+            age: 6
+          },
+          {
+            name: 'Jeff',
+            age: 5
+          }
+        ]
+      }, runScenario);
+    }
+
+    function runScenario () {
+      sc.test('Check whether sub collection was created - check cPeople.JSON[0].listKid.nameCollection')
+        .check(cPeople.JSON[0].listKid.nameCollection)
+        .equalTo("kid");
+
+      sc.test('Created sub collection should be empty - cPeople.JSON[0].listKid.JSON.length')
+        .check(cPeople.JSON[0].listKid.JSON.length)
+        .equalTo(0);
+
+      cleanUpAfter();
+    }
+
+    function cleanUpAfter() {
+      Collection.prototype.deleteWebSQL('kid', function () {
+        Collection.prototype.deleteWebSQL('people', function () {
+          websql.deleteTable('master', function () {
+            sc.resolve();
+          });
+        });
+      });
+    }
+  });
+  scRunner.run('all');
   var sc = function () {
     function cleanUp() {
       Collection.prototype.deleteWebSQL('kid', function () {
