@@ -18,7 +18,7 @@ app.controller('AppCtrl', function () {
   /* collection: create multi-dim collection.
   *  Create table structure according to multi-dimensional obj structure.
   * */
-  scRunner.add('create multi-dim collection', function (sc) {
+  scRunner.add('Create multi-dim collection', function (sc) {
     cleanUpBefore();
 
     function cleanUpBefore() {
@@ -79,7 +79,7 @@ app.controller('AppCtrl', function () {
    *  Create table structure according to multi-dimensional obj structure,
    *  then add a model in it.
    * */
-  scRunner.add('create multi-dim collection then add model', function (sc) {
+  scRunner.add('Create multi-dim collection then add model', function (sc) {
     cleanUpBefore();
 
     function cleanUpBefore() {
@@ -152,7 +152,7 @@ app.controller('AppCtrl', function () {
    *  Note: You need a model already being added to collection, otherwise there is nothing to add,
    *        run one of the scenarios that adds model to collection.
    * */
-  scRunner.add('load multi-dim collection from database', function (sc) {
+  scRunner.add('Load multi-dim collection from database', function (sc) {
     cleanUpBefore();
 
     function cleanUpBefore() {
@@ -232,7 +232,7 @@ app.controller('AppCtrl', function () {
    *  Create table structure according to multi-dimensional obj structure,
    *  then add a list of model at one.
    * */
-  scRunner.add('add List of Models to Collection', function (sc) {
+  scRunner.add('Add List of Models to Collection', function (sc) {
     cleanUpBefore();
 
     function cleanUpBefore() {
@@ -404,18 +404,19 @@ app.controller('AppCtrl', function () {
       });
     }
   });
-  scRunner.run('all');
-  var sc = function () {
+
+  /* collection: remove model from collection
+   * */
+  scRunner.add('Remove Model from Collection', function (sc) {
+    cleanUp();
+
     function cleanUp() {
       Collection.prototype.deleteWebSQL('kid', function () {
-        Collection.prototype.deleteWebSQL('people', createCollectionKid());
+        Collection.prototype.deleteWebSQL('people', function () {
+          websql.deleteTable('master', createCollectionKid);
+        });
       });
     }
-
-    cleanUp();
-//    createCollectionKid();
-//    createCollectionKid();
-//    createCollectionPeople();
 
     function createCollectionKid() {
       window.cKid = new Collection({
@@ -424,12 +425,12 @@ app.controller('AppCtrl', function () {
           name: 'Melissa',
           age: '6'
         },
-        callback: addListToKid,
-        debug: true
+        callback: addModelToKid,
+        debug: false
       });
     }
 
-    function addListToKid() {
+    function addModelToKid() {
       window.cKid.addArray([
         {
           name: 'Melissa',
@@ -451,122 +452,12 @@ app.controller('AppCtrl', function () {
           },
           listKid: 'collectionType_kid'
         },
-        callback: addModelToPeople,
-//        callback: callbackEnd,
-        debug: true
+        callback: addListModelToPeople,
+        debug: false
       });
     }
 
-    function addModelToPeople() {
-      window.cPeople.add({
-        name: 'John',
-        age: 12,
-        address: {
-          line1: '93. Meridian place',
-          line2: 'London',
-          postCode: 'E14 9FF'
-        },
-        listKid: [
-          {
-            name: 'Melissa',
-            age: 6
-          },
-          {
-            name: 'Jeff',
-            age: 5
-          }
-        ]
-      }, addToKidInCollPeople);
-//      }, callbackEnd);
-    }
-
-    // todo: create a Collection instance programmatically to array but dont add the array just yet.
-
-    function addToKidInCollPeople() {
-      var size = cPeople.JSON.length;
-      cPeople.JSON[size-1].listKid.addArray([
-        {
-          name: 'Steve',
-          age: '6'
-        },
-        {
-          name: 'Adam',
-          age: '7'
-        }
-      ], callbackEnd);
-    }
-
-    function callbackEnd() {
-      console.log('Done :)');
-
-      console.log('cPeople.JSON: ', cPeople.JSON);
-      var size = cPeople.JSON.length,
-          optLast = cPeople.JSON[size-1].listKid.opt,
-          optFirst = cPeople.JSON[0].listKid.opt;
-
-      console.log('opt in Kid in first cPeople: ', optFirst);
-      console.log('opt in Kid in last cPeople: ', optLast);
-    }
-  };
-  var cleanUp =  function () {
-//    Collection.prototype.deleteWebSQL('kid');
-    Collection.prototype.deleteWebSQL('people');
-    websql.emptyTable('master');
-    websql.deleteTable('c_kid');
-  };
-
-  /* collection: remove model to collection
-  * */
-  var sc = function () {
-    cleanUp();
-
-    function cleanUp() {
-      Collection.prototype.deleteWebSQL('kid', function () {
-        Collection.prototype.deleteWebSQL('people', createCollectionKid());
-      });
-    }
-
-    function createCollectionKid() {
-      window.cKid = new Collection({
-        type: 'kid',
-        default: {
-          name: 'Melissa',
-          age: '6'
-        },
-        callback: addListToKid,
-        debug: true
-      });
-    }
-
-    function addListToKid() {
-      window.cKid.addArray([
-        {
-          name: 'Melissa',
-          age: '6'
-        }
-      ], createCollectionPeople);
-    }
-
-    function createCollectionPeople() {
-      window.cPeople = new Collection({
-        type: 'people',
-        default: {
-          name: 'John',
-          age: '12',
-          address: {
-            line1: '93. Meridian place',
-            line2: 'London',
-            postCode: 'E14 9FF'
-          },
-          listKid: 'collectionType_kid'
-        },
-        callback: addModelToPeople,
-//        callback: callbackEnd,
-        debug: true
-      });
-    }
-
-    function addModelToPeople() {
+    function addListModelToPeople() {
       window.cPeople.addArray([
         {
           name: 'John',
@@ -576,16 +467,7 @@ app.controller('AppCtrl', function () {
             line2: 'London',
             postCode: 'E14 9FF'
           },
-          listKid: [
-            {
-              name: 'Melissa',
-              age: 6
-            },
-            {
-              name: 'Jeff',
-              age: 5
-            }
-          ]
+          listKid: []
         },
         {
           name: 'Jane',
@@ -595,24 +477,12 @@ app.controller('AppCtrl', function () {
             line2: 'London',
             postCode: 'EW4 45'
           },
-          listKid: [
-            {
-              name: 'Melissa',
-              age: 6
-            },
-            {
-              name: 'Jeff',
-              age: 5
-            }
-          ]
+          listKid: []
         }
-      ], addToKidInCollPeople);
-//      }, callbackEnd);
+      ], addListKidInCollPeopleToKidSubColl);
     }
 
-    // todo: create a Collection instance programmatically to array but dont add the array just yet.
-
-    function addToKidInCollPeople() {
+    function addListKidInCollPeopleToKidSubColl() {
       var size = cPeople.JSON.length;
       cPeople.JSON[size-1].listKid.addArray([
         {
@@ -623,39 +493,132 @@ app.controller('AppCtrl', function () {
           name: 'Adam',
           age: '7'
         }
-      ], callbackEnd);
+      ], removeCollection);
     }
 
-    function callbackEnd() {
-      console.log('Done :)');
+    function removeCollection() {
+      cPeople.removeById('people', 2, runScenario);
+    }
 
-      console.log('cPeople.JSON: ', cPeople.JSON);
-      var size = cPeople.JSON.length,
-        optLast = cPeople.JSON[size-1].listKid.opt,
-        optFirst = cPeople.JSON[0].listKid.opt;
+    function runScenario () {
+      sc.test('There should be only one model left in Collection - cPeople.JSON.length')
+        .check(cPeople.JSON.length)
+        .equalTo(1);
 
-      console.log('opt in Kid in first cPeople: ', optFirst);
-      console.log('opt in Kid in last cPeople: ', optLast);
+      sc.test('The remaining Models "id" should be 1, Model with "id" 2 was deleted - cPeople.JSON[0].id')
+        .check(cPeople.JSON[0].id)
+        .equalTo(1);
 
-      cPeople.removeById('people', 2, function () {
-        console.log('All people related entries given by id in db should be deleted by now.');
+      checkEntryOfDeletedModel();
+
+      function checkEntryOfDeletedModel() {
+        var sqlSelectPeople = "SELECT * FROM c_people",
+          listId = [];
+        websql.run(sqlSelectPeople, function(item) {
+          listId.push(item.id);
+        },function() {
+          sc.test('The deleted model should be removed from db - listId.indexOf(2)')
+            .check(listId.indexOf(2))
+            .equalTo(-1);
+
+          checkEntryOfRemainingModel();
+        });
+      }
+
+      function checkEntryOfRemainingModel() {
+        var sqlSelectPeople = "SELECT * FROM c_people",
+          listId = [];
+        websql.run(sqlSelectPeople, function(item) {
+          listId.push(item.id);
+        },function() {
+          sc.test('The remaining model should be in db - listId.indexOf(1)')
+            .check(listId.indexOf(1))
+            .notEqualTo(-1);
+
+          checkEntryOfDeletedModelsAddressDim();
+        });
+      }
+
+      function checkEntryOfDeletedModelsAddressDim() {
+        var sqlSelectPeopleAddress = "SELECT * FROM c_people_address",
+            listIdLink = [];
+
+        websql.run(sqlSelectPeopleAddress, function(item) {
+          listIdLink.push(item.id);
+        },function() {
+          sc.test('The deleted model\'s address dimension should be removed from db - listIdLink.indexOf(2)')
+            .check(listIdLink.indexOf(2))
+            .equalTo(-1);
+
+          checkEntryOfRemainingdModelsAddressDim();
+        });
+      }
+
+      function checkEntryOfRemainingdModelsAddressDim() {
+        var sqlSelectPeopleAddress = "SELECT * FROM c_people_address",
+          listIdLink = [];
+
+        websql.run(sqlSelectPeopleAddress, function(item) {
+          listIdLink.push(item.id);
+        },function() {
+          sc.test('The remaining model\'s address dimension should be in db - listIdLink.indexOf(1)')
+            .check(listIdLink.indexOf(1))
+            .notEqualTo(-1);
+
+          checkEntryOfDeletedModelInSubCollection();
+        });
+      }
+
+      function checkEntryOfDeletedModelInSubCollection() {
+        var sqlSelectPeople = "SELECT * FROM c_kid",
+          listIdLink = [];
+        websql.run(sqlSelectPeople, function(item) {
+          listIdLink.push(item.id);
+        },function() {
+          sc.test('The deleted model in sub Collection should be removed from db - listIdLink.indexOf(2)')
+            .check(listIdLink.indexOf(2))
+            .equalTo(-1);
+
+          checkEntryOfRemainingModelInSubCollection();
+        });
+      }
+
+      function checkEntryOfRemainingModelInSubCollection() {
+        var sqlSelectPeople = "SELECT * FROM c_kid",
+          listIdLink = [];
+        websql.run(sqlSelectPeople, function(item) {
+          listIdLink.push(item.id);
+        },function() {
+          sc.test('The remaining model in sub Collection should be in db - listIdLink.indexOf(1)')
+            .check(listIdLink.indexOf(1))
+            .notEqualTo(-1);
+
+          cleanUpAfter();
+        });
+      }
+
+    }
+
+    function cleanUpAfter() {
+      Collection.prototype.deleteWebSQL('kid', function () {
+        Collection.prototype.deleteWebSQL('people', function () {
+          websql.deleteTable('master', function () {
+            sc.resolve();
+          });
+        });
       });
     }
-  };
-  var cleanUp =  function () {
-    Collection.prototype.deleteWebSQL('kid', function () {
-      Collection.prototype.deleteWebSQL('people', createCollectionKid());
-    });
-  };
+  });
+
 
   /* Collection: Update collection */
-  var sc = function () {
+  scRunner.add('Update collection', function (sc) {
     cleanUp();
 
     function cleanUp() {
-      Collection.prototype.deleteWebSQL('people', function () {
-        Collection.prototype.deleteWebSQL('kid', function () {
-          websql.emptyTable('master', createCollectionKid);
+      Collection.prototype.deleteWebSQL('kid', function () {
+        Collection.prototype.deleteWebSQL('people', function () {
+          websql.deleteTable('master', createCollectionKid);
         });
       });
     }
@@ -668,7 +631,7 @@ app.controller('AppCtrl', function () {
           age: '6'
         },
         callback: addListToKid,
-        debug: true
+        debug: false
       });
     }
 
@@ -695,8 +658,7 @@ app.controller('AppCtrl', function () {
           listKid: 'collectionType_kid'
         },
         callback: addModelToPeople,
-//        callback: callbackEnd,
-        debug: true
+        debug: false
       });
     }
 
@@ -710,16 +672,7 @@ app.controller('AppCtrl', function () {
             line2: 'London',
             postCode: 'E14 9FF'
           },
-          listKid: [
-            {
-              name: 'Melissa',
-              age: 6
-            },
-            {
-              name: 'Jeff',
-              age: 5
-            }
-          ]
+          listKid: []
         },
         {
           name: 'Jane',
@@ -729,28 +682,84 @@ app.controller('AppCtrl', function () {
             line2: 'London',
             postCode: 'EW4 45'
           },
-          listKid: [
-            {
-              name: 'Melissa',
-              age: 6
-            },
-            {
-              name: 'Jeff',
-              age: 5
-            }
-          ]
+          listKid: []
         }
-      ], callbackEnd);
-//      }, callbackEnd);
+      ], checkJSONstateInDb);
+
     }
 
-    function callbackEnd() {
-      console.log('End of all operation');
+    function checkJSONstateInDb() {
+      sc.log('  Check Datebase State JSON before Delete: ');
+
+      // Structure of db representation "JSONstateInDb" should be the same as JSON after loading Collection
+      sc.test('Number of Models in JSONstateInDb should be the same as num of Models in JSON - cPeople.JSONstateInDb.length')
+        .check(cPeople.JSONstateInDb.length)
+        .equalTo(cPeople.JSON.length);
+
+      sc.test('"id"s in JSONstateInDb should be the same as "id"s in JSON - cPeople.JSONstateInDb[0].id')
+        .check(cPeople.JSONstateInDb[0].id)
+        .equalTo(cPeople.JSON[0].id);
+
+      sc.test('"address" key-value pair in JSONstateInDb should be the same as address key-value pair in JSON - cPeople.JSONstateInDb[0].address.id')
+        .check(cPeople.JSONstateInDb[0].address.id)
+        .equalTo(cPeople.JSON[0].address.id);
+
+      sc.test('"listKid" Collection in JSONstateInDb should be the same as lisKid Collection in JSON - cPeople.JSONstateInDb[0].listKid.nameCollection')
+        .check(cPeople.JSONstateInDb[0].listKid.nameCollection)
+        .equalTo(cPeople.JSON[0].listKid.nameCollection);
+
+      deleteModel();
     }
 
-    console.log('update');
-  };
+    function deleteModel() {
+      cPeople.JSON[0].name = "Adam";
+      window.cPeople.check(checkDatebaseStateJSON);
 
+      function checkDatebaseStateJSON() {
+        sc.log('  Datebase State JSON after Delete:');
+
+        sc.test('In the 1st. model\'s Datebase State JSON, "name" key-value pair should be updated.')
+          .check(cPeople.JSONstateInDb[0].name)
+          .equalTo('Adam');
+
+        sc.test('Name should NOT be updated in the second model in the Datebase State JSON.')
+        sc.test('In the 2nd. model\'s Datebase State JSON, "name" key-value pair should NOT be updated.')
+          .check(cPeople.JSONstateInDb[1].name)
+          .equalTo('Jane');
+
+        checkDb();
+      }
+
+      function checkDb() {
+        sc.log('  Datebase after Delete: ');
+
+        websql.run('SELECT name FROM c_people where id=1;', function(item) {
+          sc.test('In DB, the entry that represents 1st. Model\'s 1st. dim, the field "name" should be updated.')
+            .check(item.name)
+            .equalTo('Adam');
+        }, function() {
+          websql.run('SELECT name FROM c_people where id=2;', function(item) {
+            sc.test('Name should NOT be updated in the second model in the DB.')
+            sc.test('In DB, the entry that represents 2st. Model\'s 1st. dim, the field "name" should NOT be updated.')
+              .check(item.name)
+              .equalTo('Jane');
+          }, undefined);
+        });
+      }
+//      cleanUpAfter();
+    }
+
+    function cleanUpAfter() {
+      Collection.prototype.deleteWebSQL('kid', function () {
+        Collection.prototype.deleteWebSQL('people', function () {
+          websql.deleteTable('master', function () {
+            sc.resolve();
+          });
+        });
+      });
+    }
+  });
+  scRunner.run('all');
 
 
   /* ###############
