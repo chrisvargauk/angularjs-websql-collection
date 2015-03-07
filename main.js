@@ -1,14 +1,3 @@
-// Done: break up the test to scenarios
-// Done: Create 'car' and and 'kid' collection types, check for errors if not done yet
-// Done: link up other collections in collections. Pass along the id
-// Done: - add idCollectionLink to every single table
-// Done: collection.empty, collection.deleteTables, collection.update
-// Done: Sync JSON
-// Done: collectionInstance.removeById
-// Todo: model.remove
-// Todo: collectionInstance.update
-// Todo: deleteTable: dont throw error if table doesnt exist
-
 var app = angular.module('app', []);
 
 app.controller('AppCtrl', function () {
