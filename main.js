@@ -313,9 +313,11 @@ app.controller('AppCtrl', function () {
     cleanUpBefore();
 
     function cleanUpBefore() {
-      Collection.prototype.deleteWebSQL('kid', function () {
-        Collection.prototype.deleteWebSQL('people', function () {
-          websql.deleteTable('master', createCollectionKid);
+      websql.deleteTable('c_kid', function () {
+        websql.deleteTable('c_people', function () {
+          websql.deleteTable('c_people_address', function () {
+            websql.deleteTable('master', createCollectionKid);
+          });
         });
       });
     }
@@ -684,8 +686,15 @@ app.controller('AppCtrl', function () {
           },
           listKid: []
         }
-      ], checkJSONstateInDb);
+      ], addModelToSubCollection);
 
+    }
+
+    function addModelToSubCollection() {
+      cPeople.JSON[0].listKid.add({
+        name: 'Adam',
+        age: '9'
+      }, checkJSONstateInDb);
     }
 
     function checkJSONstateInDb() {
@@ -708,21 +717,20 @@ app.controller('AppCtrl', function () {
         .check(cPeople.JSONstateInDb[0].listKid.nameCollection)
         .equalTo(cPeople.JSON[0].listKid.nameCollection);
 
-      deleteModel();
+      updateModelOnFirstDim();
     }
 
-    function deleteModel() {
+    function updateModelOnFirstDim() {
       cPeople.JSON[0].name = "Adam";
       window.cPeople.check(checkDatebaseStateJSON);
 
       function checkDatebaseStateJSON() {
-        sc.log('  Datebase State JSON after Delete:');
+        sc.log('  Single-dim - Database State JSON after Delete:');
 
         sc.test('In the 1st. model\'s Datebase State JSON, "name" key-value pair should be updated.')
           .check(cPeople.JSONstateInDb[0].name)
           .equalTo('Adam');
 
-        sc.test('Name should NOT be updated in the second model in the Datebase State JSON.')
         sc.test('In the 2nd. model\'s Datebase State JSON, "name" key-value pair should NOT be updated.')
           .check(cPeople.JSONstateInDb[1].name)
           .equalTo('Jane');
@@ -731,7 +739,7 @@ app.controller('AppCtrl', function () {
       }
 
       function checkDb() {
-        sc.log('  Datebase after Delete: ');
+        sc.log('  Single-dim - Datebase after Delete: ');
 
         websql.run('SELECT name FROM c_people where id=1;', function(item) {
           sc.test('In DB, the entry that represents 1st. Model\'s 1st. dim, the field "name" should be updated.')
@@ -739,14 +747,70 @@ app.controller('AppCtrl', function () {
             .equalTo('Adam');
         }, function() {
           websql.run('SELECT name FROM c_people where id=2;', function(item) {
-            sc.test('Name should NOT be updated in the second model in the DB.')
             sc.test('In DB, the entry that represents 2st. Model\'s 1st. dim, the field "name" should NOT be updated.')
               .check(item.name)
               .equalTo('Jane');
-          }, undefined);
+          }, updateModelOnSecondDim);
         });
       }
+
 //      cleanUpAfter();
+    }
+
+    function updateModelOnSecondDim() {
+      cPeople.JSON[0].address.line2 = "Brighton";
+      window.cPeople.check(checkDatebaseStateJSON);
+
+      function checkDatebaseStateJSON() {
+        sc.log('  Multi-dim - Database State JSON after Delete:');
+
+        sc.test('In the 1st. model\'s Datebase State JSON, "address.line2" key-value pair should be updated.')
+          .check(cPeople.JSON[0].address.line2)
+          .equalTo('Brighton');
+
+        sc.test('In the 2nd. model\'s Datebase State JSON, "address.line2" key-value pair should NOT be updated.')
+          .check(cPeople.JSON[1].address.line2)
+          .equalTo('London');
+
+        checkDb();
+      }
+
+      function checkDb() {
+        sc.log('  Multi-dim - Datebase after Delete: ');
+
+        websql.run('SELECT line2 FROM c_people_address where idLink=1;', function(item) {
+          sc.test('In DB, the entry that represents 1st. Model\'s 2st. dim, the field "line2" should be updated.')
+            .check(item.line2)
+            .equalTo('Brighton');
+        }, function() {
+          websql.run('SELECT line2 FROM c_people_address where idLink=2;', function(item) {
+            sc.test('In DB, the entry that represents 2st. Model\'s 2st. dim, the field "line2" should NOT be updated.')
+              .check(item.line2)
+              .equalTo('London');
+          }, updateModelInSubCollection);
+        });
+      }
+    }
+
+    function updateModelInSubCollection() {
+      cPeople.JSON[0].listKid.JSON[0].name = 'Jane';
+      cPeople.JSON[0].listKid.check(checkDb);
+
+      function checkDb() {
+        sc.log('  Sub Collection - Single-dim - Datebase after Delete: ');
+
+        websql.run('SELECT name FROM c_kid where id=2;', function(item) {
+          sc.test('In DB, the entry that represents sub collection\'s 1st. Model\'s 1st. dim, the field "name" should be updated.')
+            .check(item.name)
+            .equalTo('Jane');
+        }, function() {
+          websql.run('SELECT name FROM c_kid where id=1;', function(item) {
+            sc.test('In DB, the entry that represents sub collection\'s 2st. Model\'s 1st. dim, the field "name" should NOT be updated.')
+              .check(item.name)
+              .equalTo('Melissa');
+          });
+        });
+      }
     }
 
     function cleanUpAfter() {
@@ -759,6 +823,8 @@ app.controller('AppCtrl', function () {
       });
     }
   });
+
+  /* Run all scenarios */
   scRunner.run('all');
 
 
@@ -901,338 +967,6 @@ app.controller('AppCtrl', function () {
 
     runner.run();
   };
-
-//  createNewCollection();
-//  createNewCollectionThenAdd();
-//  createNewCollectionNoDefaultProvThenAdd();
-//  createNewCollectionThenAddArray();
-//  createNewCollectionLoadFromDB();
-//  createNewCollWithOtherCollectionsInIt();
-//  runCrawler();
-//  emptyCollectionInstance();
-//  emptyCollectionWithoutInstance();
-//  deleteCollectionInstanceFromDB();
-//  deleteCollectionWithoutInstanceFromDB();
-
-  function createNewCollection() {
-    var modelBlueprint = {
-      name: 'John',
-      age: 12,
-      address: {
-        line1: '93. Meridian place',
-        line2: 'London',
-        postCode: 'E14 9FF'
-      },
-      listCar: [{name: 'audi'}, {name: 'BMW'}, {name: 'Golf'}],
-      listKid: [
-        {
-          name: 'Melissa',
-          age: 6
-        },
-        {
-          name: 'Jeff',
-          age: 5
-        }
-      ]
-    };
-
-    window.peopel = new Collection({
-      type: 'people',
-      default: {
-        name: 'John',
-        age: '12',
-        address: {
-          line1: '93. Meridian place',
-          line2: 'London',
-          postCode: 'E14 9FF'
-        },
-        listCar: 'collectionType_car',
-        listKid: 'collectionType_kid'
-      },
-      filter: 'id < 4',
-      callback: callback,
-      debug: true
-    });
-
-    function callback() {
-      console.log('Done :)');
-    }
-  }
-
-  function createNewCollectionThenAdd() {
-    window.cKid = new Collection({
-      type: 'kid',
-      default: {
-        name: 'Melissa',
-        age: '6'
-      },
-      callback: loadCarCollection,
-      debug: true
-    });
-
-    function loadCarCollection() {
-      window.cCar = new Collection({
-        type: 'car',
-        default: {
-          name: 'Audi'
-        },
-        callback: loadPeopleCollection,
-        debug: true
-      });
-    }
-
-    function loadPeopleCollection () {
-      window.peopel = new Collection({
-        type: 'people',
-        default: {
-          name: 'John',
-          age: '12',
-          address: {
-            line1: '93. Meridian place',
-            line2: 'London',
-            postCode: 'E14 9FF'
-          },
-          listCar: 'collectionType_car',
-          listKid: 'collectionType_kid'
-        },
-        filter: 'id < 4',
-        callback: addModelToPeople,
-        debug: true
-      });
-    }
-
-    function addModelToPeople() {
-      window.peopel.add({
-        name: 'John',
-        age: 12,
-        address: {
-          line1: '93. Meridian place',
-          line2: 'London',
-          postCode: 'E14 9FF'
-        },
-        listCar: [{name: 'audi'}, {name: 'BMW'}, {name: 'Golf'}],
-        listKid: [
-          {
-            name: 'Melissa',
-            age: 6
-          },
-          {
-            name: 'Jeff',
-            age: 5
-          }
-        ]
-      }, addListCar);
-    }
-
-    function addListCar() {
-      var size = window.peopel.JSON.length;
-      window.peopel.JSON[(size-1)].listKid.addArray([
-        {
-          name: 'Melissa',
-          age: 6
-        },
-        {
-          name: 'Jeff',
-          age: 5
-        }
-      ], callback);
-    }
-
-    function callback () {
-      console.log('hehe :)');
-    }
-  }
-
-  function createNewCollectionNoDefaultProvThenAdd() {
-    window.peopel = new Collection({
-      type: 'people',
-      default: {
-        name: 'John',
-        age: '12',
-        address: {
-          line1: '93. Meridian place',
-          line2: 'London',
-          postCode: 'E14 9FF'
-        },
-        listCar: 'collectionType_car',
-        listKid: 'collectionType_kid'
-      },
-      filter: 'id < 4',
-      callback: addModelToPeople,
-      debug: true
-    });
-
-    function addModelToPeople() {
-      window.peopel.add({
-        name: 'John',
-        age: 12,
-        address: {
-          line1: '93. Meridian place',
-          line2: 'London',
-          postCode: 'E14 9FF'
-        },
-        listCar: [{name: 'audi'}, {name: 'BMW'}, {name: 'Golf'}],
-        listKid: [
-          {
-            name: 'Melissa',
-            age: 6
-          },
-          {
-            name: 'Jeff',
-            age: 5
-          }
-        ]
-      }, callback);
-    }
-
-    function callback () {
-      console.log('hehe :)');
-    }
-  }
-
-  function createNewCollectionThenAddArray() {
-    window.peopel = new Collection({
-      type: 'people',
-      default: {
-        name: 'John',
-        age: '12',
-        address: {
-          line1: '93. Meridian place',
-          line2: 'London',
-          postCode: 'E14 9FF'
-        },
-        listCar: 'collectionType_car',
-        listKid: 'collectionType_kid'
-      },
-//      filter: 'id < 4',
-      callback: addModelToPeople,
-      debug: true
-    });
-
-    function addModelToPeople() {
-      var listModel = [
-        {
-          name: 'John',
-          age: 12,
-          address: {
-            line1: '93. Meridian place',
-            line2: 'London',
-            postCode: 'E14 9FF'
-          },
-          listCar: [{name: 'audi'}, {name: 'BMW'}, {name: 'Golf'}],
-          listKid: [
-            {
-              name: 'Melissa',
-              age: 6
-            },
-            {
-              name: 'Jeff',
-              age: 5
-            }
-          ]
-        },{
-          name: 'Jane',
-          age: 11,
-          address: {
-            line1: '72. Woodlane',
-            line2: 'London',
-            postCode: 'W9 9FF'
-          },
-          listCar: [{name: 'audi'}, {name: 'BMW'}, {name: 'Golf'}],
-          listKid: [
-            {
-              name: 'Melissa',
-              age: 6
-            },
-            {
-              name: 'Jeff',
-              age: 5
-            }
-          ]
-        }
-      ];
-      window.peopel.addArray(listModel, callback);
-    }
-
-    function callback () {
-      console.log('hehe :) - all addition is done');
-    }
-  }
-
-  function createNewCollectionLoadFromDB () {
-    window.peopel = new Collection({
-      type: 'people',
-      debug: true,
-      filter: 'id < 4',
-      callback: function () {
-        console.log('This should represent the whole JSON: ', window.peopel.JSON);
-      }
-    });
-  }
-
-  function createNewCollWithOtherCollectionsInIt () {
-    window.cKid = new Collection({
-      type: 'kid',
-      default: {
-        name: 'Melissa',
-        age: '6'
-      },
-      debug: true
-    });
-
-    window.cCar = new Collection({
-      type: 'car',
-      default: {
-        name: 'Audi'
-      },
-      debug: true
-    });
-
-    window.peopel = new Collection({
-      type: 'people',
-      default: {
-        name: 'John',
-        age: '12',
-        address: {
-          line1: '93. Meridian place',
-          line2: 'London',
-          postCode: 'E14 9FF'
-        },
-        listCar: 'collectionType_car',
-        listKid: 'collectionType_kid'
-      },
-//      filter: 'id < 4',
-      callback: addModelToPeople,
-      debug: true
-    });
-
-    function addModelToPeople() {
-      window.peopel.add({
-        name: 'John',
-        age: 12,
-        address: {
-          line1: '93. Meridian place',
-          line2: 'London',
-          postCode: 'E14 9FF'
-        },
-        listCar: [{name: 'audi'}, {name: 'BMW'}, {name: 'Golf'}],
-        listKid: [
-          {
-            name: 'Melissa',
-            age: 6
-          },
-          {
-            name: 'Jeff',
-            age: 5
-          }
-        ]
-      }, callback);
-    }
-
-    function callback() {
-      console.log('Done :)');
-    }
-  }
 
   function runCrawler () {
     var modelBlueprint = {
