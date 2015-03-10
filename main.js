@@ -12,7 +12,7 @@ app.controller('AppCtrl', function () {
 
     function cleanUpBefore() {
       Collection.prototype.deleteWebSQL('people', function () {
-        websql.deleteTable('master', creteCollectionPeople);
+        websql.deleteTable('collectionType', creteCollectionPeople);
       });
     }
 
@@ -46,8 +46,8 @@ app.controller('AppCtrl', function () {
           .check(listTable.indexOf('c_people_address'))
           .notEqualTo(-1);
 
-        sc.test('Table "master" was created.')
-          .check(listTable.indexOf('master'))
+        sc.test('Table "collectionType" was created.')
+          .check(listTable.indexOf('collectionType'))
           .notEqualTo(-1);
 
         cleanUpAfter();
@@ -56,7 +56,7 @@ app.controller('AppCtrl', function () {
 
     function cleanUpAfter() {
       Collection.prototype.deleteWebSQL('people', function () {
-        websql.deleteTable('master', function () {
+        websql.deleteTable('collectionType', function () {
           sc.resolve();
         });
       });
@@ -73,7 +73,7 @@ app.controller('AppCtrl', function () {
 
     function cleanUpBefore() {
       Collection.prototype.deleteWebSQL('people', function () {
-        websql.deleteTable('master', creteCollectionPeople);
+        websql.deleteTable('collectionType', creteCollectionPeople);
       });
     }
 
@@ -126,7 +126,7 @@ app.controller('AppCtrl', function () {
 
     function cleanUpAfter() {
       Collection.prototype.deleteWebSQL('people', function () {
-        websql.deleteTable('master', function () {
+        websql.deleteTable('collectionType', function () {
           sc.resolve();
         });
       });
@@ -146,7 +146,7 @@ app.controller('AppCtrl', function () {
 
     function cleanUpBefore() {
       Collection.prototype.deleteWebSQL('people', function () {
-        websql.deleteTable('master', creteCollectionPeople);
+        websql.deleteTable('collectionType', creteCollectionPeople);
       });
     }
 
@@ -208,7 +208,7 @@ app.controller('AppCtrl', function () {
 
     function cleanUpAfter() {
       Collection.prototype.deleteWebSQL('people', function () {
-        websql.deleteTable('master', function () {
+        websql.deleteTable('collectionType', function () {
           sc.resolve();
         });
       });
@@ -226,7 +226,7 @@ app.controller('AppCtrl', function () {
 
     function cleanUpBefore() {
       Collection.prototype.deleteWebSQL('people', function () {
-        websql.deleteTable('master', creteCollectionPeople);
+        websql.deleteTable('collectionType', creteCollectionPeople);
       });
     }
 
@@ -285,7 +285,7 @@ app.controller('AppCtrl', function () {
 
     function cleanUpAfter() {
       Collection.prototype.deleteWebSQL('people', function () {
-        websql.deleteTable('master', function () {
+        websql.deleteTable('collectionType', function () {
           sc.resolve();
         });
       });
@@ -305,7 +305,7 @@ app.controller('AppCtrl', function () {
       websql.deleteTable('c_kid', function () {
         websql.deleteTable('c_people', function () {
           websql.deleteTable('c_people_address', function () {
-            websql.deleteTable('master', createCollectionKid);
+            websql.deleteTable('collectionType', createCollectionKid);
           });
         });
       });
@@ -388,7 +388,7 @@ app.controller('AppCtrl', function () {
     function cleanUpAfter() {
       Collection.prototype.deleteWebSQL('kid', function () {
         Collection.prototype.deleteWebSQL('people', function () {
-          websql.deleteTable('master', function () {
+          websql.deleteTable('collectionType', function () {
             sc.resolve();
           });
         });
@@ -404,7 +404,7 @@ app.controller('AppCtrl', function () {
     function cleanUp() {
       Collection.prototype.deleteWebSQL('kid', function () {
         Collection.prototype.deleteWebSQL('people', function () {
-          websql.deleteTable('master', createCollectionKid);
+          websql.deleteTable('collectionType', createCollectionKid);
         });
       });
     }
@@ -593,7 +593,7 @@ app.controller('AppCtrl', function () {
     function cleanUpAfter() {
       Collection.prototype.deleteWebSQL('kid', function () {
         Collection.prototype.deleteWebSQL('people', function () {
-          websql.deleteTable('master', function () {
+          websql.deleteTable('collectionType', function () {
             sc.resolve();
           });
         });
@@ -609,7 +609,7 @@ app.controller('AppCtrl', function () {
     function cleanUp() {
       Collection.prototype.deleteWebSQL('kid', function () {
         Collection.prototype.deleteWebSQL('people', function () {
-          websql.deleteTable('master', createCollectionKid);
+          websql.deleteTable('collectionType', createCollectionKid);
         });
       });
     }
@@ -805,7 +805,7 @@ app.controller('AppCtrl', function () {
     function cleanUpAfter() {
       Collection.prototype.deleteWebSQL('kid', function () {
         Collection.prototype.deleteWebSQL('people', function () {
-          websql.deleteTable('master', function () {
+          websql.deleteTable('collectionType', function () {
             sc.resolve();
           });
         });
