@@ -107,7 +107,7 @@ app.controller('AppCtrl', function () {
       }, runScenario);
     }
 
-    function runScenario () {
+    function runScenario (model) {
       sc.test('JSON is loaded properly - check window.cPeople.JSON[0].name')
         .check(window.cPeople.JSON[0].name)
         .equalTo("John");
@@ -120,6 +120,9 @@ app.controller('AppCtrl', function () {
       sc.test('JSON is loaded properly - check idLink main and sub dimensions. Sub idLink == main id.')
         .check(window.cPeople.JSON[0].address.idLink)
         .equalTo(window.cPeople.JSON[0].id);
+      sc.test('Model should be passed into callback when model added, and id from db is already set on it.')
+        .check(model.id)
+        .equalTo(1);
 
       cleanUpAfter();
     }
