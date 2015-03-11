@@ -396,6 +396,7 @@ app.controller('AppCtrl', function () {
     }
   });
 
+
   /* collection: remove model from collection
    * */
   scRunner.add('Remove Model from Collection', function (sc) {
@@ -798,8 +799,81 @@ app.controller('AppCtrl', function () {
               .check(item.name)
               .equalTo('Melissa');
           });
+
+          cleanUpAfter();
         });
       }
+    }
+
+    function cleanUpAfter() {
+      Collection.prototype.deleteWebSQL('kid', function () {
+        Collection.prototype.deleteWebSQL('people', function () {
+          websql.deleteTable('collectionType', function () {
+            sc.resolve();
+          });
+        });
+      });
+    }
+  });
+
+  scRunner.add('CollectionFactory', function (sc) {
+    sc.log('  Get instance');
+
+    cleanUp();
+
+    function cleanUp() {
+      Collection.prototype.deleteWebSQL('kid', function () {
+        websql.deleteTable('collectionType', createNewCollectionKid);
+      });
+    }
+
+    function createNewCollectionKid() {
+      collectionFactory.get('my1stColl', {
+        type: 'kid',
+        default: {
+          name: 'Melissa',
+          age: '6'
+        },
+        callback: function(collection) {
+          window.cKidNew = collection;
+          window.cKidNew.testProp = 'test';
+          createExistingCollectionKid();
+        },
+        debug: false
+      });
+    }
+
+    function createExistingCollectionKid() {
+      collectionFactory.get('my1stColl', {
+        type: 'kid',
+        default: {
+          name: 'Melissa',
+          age: '6'
+        },
+        callback: function (collection) {
+          window.cKidExisting = collection;
+            checkCollection();
+        },
+        debug: false
+      });
+    }
+
+    function checkCollection() {
+      sc.test('Callback passed into get method should receive collection instance when new collection is created.')
+        .check(typeof window.cKidNew.opt)
+        .equalTo("object");
+
+      sc.test('Callback passed into get method should receive collection instance when existing collection is created.')
+        .check(typeof window.cKidExisting.opt)
+        .equalTo("object");
+
+      sc.test('Factory should return new instance if instance doesn\'t exist with under name.')
+        .check(typeof window.cKidNew.opt)
+        .equalTo("object");
+
+      sc.test('Factory should return existing instance if instance already exist with under name.')
+        .check(window.cKidExisting.testProp)
+        .equalTo("test");
     }
 
     function cleanUpAfter() {
