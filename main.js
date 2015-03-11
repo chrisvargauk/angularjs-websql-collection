@@ -874,6 +874,53 @@ app.controller('AppCtrl', function () {
       sc.test('Factory should return existing instance if instance already exist with under name.')
         .check(window.cKidExisting.testProp)
         .equalTo("test");
+
+      createDeferredOfExinsingColl();
+    }
+
+    function createDeferredOfExinsingColl() {
+      sc.log('  getDeferredFn');
+
+      window.deferredFn = collectionFactory.getDeferredFn('my1stColl', {
+        type: 'kid',
+        default: {
+          name: 'Melissa',
+          age: '6'
+        },
+        callback: function (collection) {
+          //..
+        },
+        debug: false
+      });
+
+      checkDeferredFunction();
+    }
+
+    function checkDeferredFunction() {
+      sc.test('collectionFactory.getDeferredFn method should return with function.')
+        .check(typeof window.deferredFn)
+        .equalTo("function");
+
+      checkDeferredFunctionsPromise();
+    }
+
+    function checkDeferredFunctionsPromise() {
+      var $qDummy = {
+        defer: function (){
+          return {
+            promise: {},
+            resolve: function () {
+
+            }
+          }
+        }
+      };
+
+      var promise = window.deferredFn($qDummy);
+
+      sc.test('collectionFactory.getDeferredFn method should return with function and that should return a promise.')
+        .check(typeof promise)
+        .equalTo("object");
     }
 
     function cleanUpAfter() {
