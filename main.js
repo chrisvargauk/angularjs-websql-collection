@@ -648,6 +648,14 @@ app.controller('AppCtrl', function () {
       sc.test('Get mdoel by invalid id.')
         .check(typeof window.cKid.getById(3))
         .equalTo('undefined');
+
+      cleanUpAfter();
+    }
+
+    function cleanUpAfter() {
+      Collection.prototype.deleteWebSQL('kid', function () {
+        sc.resolve();
+      });
     }
 
   });
@@ -985,7 +993,7 @@ app.controller('AppCtrl', function () {
   });
 
   /* Run all scenarios */
-  scRunner.run('Get model from collection by WebSQL id');
+  scRunner.run('all');
 
 
   /* ###############
