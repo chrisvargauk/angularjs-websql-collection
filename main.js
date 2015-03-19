@@ -605,6 +605,53 @@ app.controller('AppCtrl', function () {
     }
   });
 
+  /* collection: get model from collection by WebSQL id */
+  scRunner.add('Get model from collection by WebSQL id', function (sc) {
+    cleanUp();
+
+    function cleanUp() {
+      Collection.prototype.deleteWebSQL('kid', function () {
+        websql.deleteTable('collectionType', createCollectionKid);
+      });
+    }
+
+    function createCollectionKid() {
+      window.cKid = new Collection({
+        type: 'kid',
+        default: {
+          name: 'Melissa',
+          age: '6'
+        },
+        callback: addModelToKid,
+        debug: false
+      });
+    }
+
+    function addModelToKid() {
+      window.cKid.addArray([
+        {
+          name: 'Melissa',
+          age: '6'
+        },
+        {
+          name: 'Steve',
+          age: '8'
+        }
+      ], runScenario);
+    }
+
+    function runScenario () {
+      sc.test('Get mdoel by valid id.')
+        .check(window.cKid.getById(2).name)
+        .equalTo('Steve');
+
+      sc.test('Get mdoel by invalid id.')
+        .check(typeof window.cKid.getById(3))
+        .equalTo('undefined');
+    }
+
+  });
+
 
   /* Collection: Update collection */
   scRunner.add('Update collection', function (sc) {
@@ -938,7 +985,7 @@ app.controller('AppCtrl', function () {
   });
 
   /* Run all scenarios */
-  scRunner.run('all');
+  scRunner.run('Get model from collection by WebSQL id');
 
 
   /* ###############
