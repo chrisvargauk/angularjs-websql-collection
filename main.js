@@ -992,7 +992,7 @@ app.controller('AppCtrl', function () {
     }
   });
 
-  scRunner.add('Manage Binary values', function (sc) {
+  scRunner.add('Manage Boolean values', function (sc) {
     cleanUp();
 
     function cleanUp() {
@@ -1081,7 +1081,22 @@ app.controller('AppCtrl', function () {
         .check(typeof window.cKidReloaded.JSON[1].isFemale)
         .equalTo('boolean');
 
-      cleanUpAfter();
+      updateModelInCollection();
+    }
+
+    function updateModelInCollection() {
+      window.cKid.JSON[0].isFemale = false;
+      window.cKid.check();
+
+      checkUpdateInDB();
+    }
+
+    function checkUpdateInDB() {
+      websql.run('SELECT isFemale FROM c_kid WHERE id=1;', function(item) {
+        sc.test('Boolean value should be updated in DB. Check true to false.')
+          .check(item.isFemale)
+          .equalTo('false');
+      }, cleanUpAfter);
     }
 
     function cleanUpAfter() {
