@@ -1007,7 +1007,7 @@ app.controller('AppCtrl', function () {
         default: {
           name: 'Melissa',
           age: '6',
-          isFemale: 'true'
+          isFemale: 'false'
         },
         callback: function(collection) {
           window.cKid = collection;
@@ -1028,6 +1028,10 @@ app.controller('AppCtrl', function () {
           name: 'Adam',
           age: '7',
           isFemale: false
+        },
+        {
+          name: 'Steve',
+          age: '7'
         }
       ], checkCollectionInDB);
     }
@@ -1042,10 +1046,14 @@ app.controller('AppCtrl', function () {
           sc.test('Boolean value should be saved as string. Check false.')
             .check(typeof item.isFemale)
             .equalTo('string');
+        }, function () {
+          websql.run('SELECT isFemale FROM c_kid WHERE id=3;', function(item) {
+            sc.test('If undefined, default value should be saved.')
+              .check(item.isFemale)
+              .equalTo('false');
+          }, ReloadCollectionFromDB);
         });
       });
-
-      ReloadCollectionFromDB();
     }
 
     function ReloadCollectionFromDB() {
@@ -1072,21 +1080,21 @@ app.controller('AppCtrl', function () {
       sc.test('Boolean value should be loaded back as boolean from string type in DB. Check true. Check false.')
         .check(typeof window.cKidReloaded.JSON[1].isFemale)
         .equalTo('boolean');
+
+      cleanUpAfter();
     }
 
     function cleanUpAfter() {
       Collection.prototype.deleteWebSQL('kid', function () {
-        Collection.prototype.deleteWebSQL('people', function () {
-          websql.deleteTable('collectionType', function () {
-            sc.resolve();
-          });
+        websql.deleteTable('collectionType', function () {
+          sc.resolve();
         });
       });
     }
   });
 
   /* Run all scenarios */
-  scRunner.run('Manage Binary values');
+  scRunner.run('all');
 
 
   /* ###############
