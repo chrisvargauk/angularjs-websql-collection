@@ -1007,7 +1007,7 @@ app.controller('AppCtrl', function () {
         default: {
           name: 'Melissa',
           age: '6',
-          isFemale: 'false'
+          isFemale: false
         },
         callback: function(collection) {
           window.cKid = collection;
