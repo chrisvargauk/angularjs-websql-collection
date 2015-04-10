@@ -1110,7 +1110,9 @@ app.controller('AppCtrl', function () {
     }
   });
 
-  scRunner.add('Save Database', function (sc) {
+  var webSQLAsText;
+
+  scRunner.add('Export WebSQL to Text', function (sc) {
     cleanUpBefore();
 
     function cleanUpBefore() {
@@ -1195,6 +1197,7 @@ app.controller('AppCtrl', function () {
 
     function exportCollections() {
       Collection.export(function(dbAsText) {
+        webSQLAsText = dbAsText;
         checkResult(dbAsText);
       });
     }
@@ -1236,7 +1239,103 @@ app.controller('AppCtrl', function () {
     }
   });
 
-  scRunner.run('all');
+  scRunner.add('Import WebSQL from Text', function (sc) {
+    var listCollectionRestored = {};
+    cleanUpBefore();
+
+    function cleanUpBefore() {
+      websql.deleteTable('c_kid', function () {
+        websql.deleteTable('c_people', function () {
+          websql.deleteTable('c_people_address', function () {
+            websql.deleteTable('collectionType', restoreAllCollection);
+          });
+        });
+      });
+    }
+
+    function restoreAllCollection() {
+      var webSQLAsObj = JSON.parse(webSQLAsText),
+          listCmdLoadCollection = new Collection.prototype.asyncRunner();
+
+      webSQLAsObj.collectionType.forEach(function (collectionType) {
+        listCmdLoadCollection.schedule(function(resolve) {
+          new Collection({
+            type: collectionType.nameCollection,
+            default: collectionType.defaultModel,
+            callback: function (collection) {
+              listCollectionRestored[collectionType.nameCollection] = collection;
+              resolve();
+            }
+          });
+        });
+      });
+
+      listCmdLoadCollection.done(nextFollowing);
+      listCmdLoadCollection.run();
+    }
+
+    function nextFollowing() {
+      var webSQLAsObj = JSON.parse(webSQLAsText),
+          listCmdAddModelToCollection = new Collection.prototype.asyncRunner();
+
+      console.log('webSQLAsObj', webSQLAsObj);
+
+      Object.keys(webSQLAsObj).forEach(function(key) {
+        // filter off everything but collections
+        if (key.indexOf('c_') === -1) {
+          return;
+        }
+
+        var item = webSQLAsObj[key],
+            nameCollection = key.replace('c_', '');
+
+        console.log('nameCollection', nameCollection);
+
+        item.forEach(function (model) {
+          listCmdAddModelToCollection.schedule(function (resolve) {
+            var modelFiltered = filterModel(model);
+
+            // Filter off 'id' and 'idLink' properties
+            function filterModel(model) {
+              var modelFiltered = {};
+              Object.keys(model).forEach(function (keyModel) {
+                if (keyModel === 'id'     ||
+                  keyModel === 'idLink'
+                  ) {
+                  return;
+                }
+
+                // if property is an object
+                if (typeof model[keyModel] === 'object') {
+                  // if Object is another Collection
+                  if (typeof model[keyModel].nameCollection !== 'undefined') {
+                    modelFiltered[keyModel] = [];
+                  } else {
+                    modelFiltered[keyModel] = filterModel(model[keyModel]);
+                  }
+                } else {
+                  modelFiltered[keyModel] = model[keyModel];
+                }
+              });
+
+              return modelFiltered;
+            }
+
+
+            listCollectionRestored[nameCollection].add(modelFiltered, resolve);
+          });
+        });
+
+        listCmdAddModelToCollection.run();
+      });
+    }
+  });
+
+  scRunner.run('Export WebSQL to Text');
+
+  setTimeout(function () {
+    scRunner.run('Import WebSQL from Text');
+  }, 1000);
 
 
   /* ###############
