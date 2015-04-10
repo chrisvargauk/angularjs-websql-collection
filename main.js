@@ -1270,11 +1270,11 @@ app.controller('AppCtrl', function () {
         });
       });
 
-      listCmdLoadCollection.done(nextFollowing);
+      listCmdLoadCollection.done(restoreModelsInCollections);
       listCmdLoadCollection.run();
     }
 
-    function nextFollowing() {
+    function restoreModelsInCollections() {
       var webSQLAsObj = JSON.parse(webSQLAsText),
           listCmdAddModelToCollection = new Collection.prototype.asyncRunner();
 
@@ -1286,45 +1286,46 @@ app.controller('AppCtrl', function () {
           return;
         }
 
-        var item = webSQLAsObj[key],
+        var collection = webSQLAsObj[key],
             nameCollection = key.replace('c_', '');
 
-        console.log('nameCollection', nameCollection);
+        loadCollection(collection, nameCollection);
 
-        item.forEach(function (model) {
-          listCmdAddModelToCollection.schedule(function (resolve) {
-            var modelFiltered = filterModel(model);
+        function loadCollection(collection, nameCollection) {
+          collection.forEach(function (model) {
+            listCmdAddModelToCollection.schedule(function (resolve) {
+              var modelFiltered = filterModel(model);
 
-            // Filter off 'id' and 'idLink' properties
-            function filterModel(model) {
-              var modelFiltered = {};
-              Object.keys(model).forEach(function (keyModel) {
-                if (keyModel === 'id'     ||
-                  keyModel === 'idLink'
-                  ) {
-                  return;
-                }
-
-                // if property is an object
-                if (typeof model[keyModel] === 'object') {
-                  // if Object is another Collection
-                  if (typeof model[keyModel].nameCollection !== 'undefined') {
-                    modelFiltered[keyModel] = [];
-                  } else {
-                    modelFiltered[keyModel] = filterModel(model[keyModel]);
+              // Filter off 'id' and 'idLink' properties
+              function filterModel(model) {
+                var modelFiltered = {};
+                Object.keys(model).forEach(function (keyModel) {
+                  if (keyModel === 'id' ||
+                    keyModel === 'idLink'
+                    ) {
+                    return;
                   }
-                } else {
-                  modelFiltered[keyModel] = model[keyModel];
-                }
-              });
 
-              return modelFiltered;
-            }
+                  // if property is an object
+                  if (typeof model[keyModel] === 'object') {
+                    // if Object is another Collection
+                    if (typeof model[keyModel].nameCollection !== 'undefined') {
+                      modelFiltered[keyModel] = loadCollection(model[keyModel].JSON, model[keyModel].nameCollection);
+                    } else {
+                      modelFiltered[keyModel] = filterModel(model[keyModel]);
+                    }
+                  } else {
+                    modelFiltered[keyModel] = model[keyModel];
+                  }
+                });
 
+                return modelFiltered;
+              }
 
-            listCollectionRestored[nameCollection].add(modelFiltered, resolve);
+              listCollectionRestored[nameCollection].add(modelFiltered, resolve);
+            });
           });
-        });
+        };
 
         listCmdAddModelToCollection.run();
       });
