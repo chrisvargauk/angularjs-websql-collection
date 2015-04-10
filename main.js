@@ -301,7 +301,7 @@ app.controller('AppCtrl', function () {
    *  Note: At addition, in the obj you pass in,
    *        models in sub collection wont be added to created sub collection.
    * */
-  scRunner.add('create multi-dim collection with another other collection in it', function (sc) {
+  scRunner.add('create multi-dim collection with another collection in it', function (sc) {
     cleanUpBefore();
 
     function cleanUpBefore() {
@@ -979,6 +979,8 @@ app.controller('AppCtrl', function () {
       sc.test('collectionFactory.getDeferredFn method should return with function and that should return a promise.')
         .check(typeof promise)
         .equalTo("object");
+
+      cleanUpAfter();
     }
 
     function cleanUpAfter() {
@@ -1108,7 +1110,132 @@ app.controller('AppCtrl', function () {
     }
   });
 
-  /* Run all scenarios */
+  scRunner.add('Save Database', function (sc) {
+    cleanUpBefore();
+
+    function cleanUpBefore() {
+      websql.deleteTable('c_kid', function () {
+        websql.deleteTable('c_people', function () {
+          websql.deleteTable('c_people_address', function () {
+            websql.deleteTable('collectionType', createCollectionKid);
+          });
+        });
+      });
+    }
+
+    function createCollectionKid() {
+      window.cKid = new Collection({
+        type: 'kid',
+        default: {
+          name: 'Melissa',
+          age: '6'
+        },
+        callback: addListToKid,
+        debug: false
+      });
+    }
+
+    function addListToKid() {
+      window.cKid.addArray([
+        {
+          name: 'Jane',
+          age: '6'
+        },
+        {
+          name: 'Tom',
+          age: '5'
+        }
+      ], creteCollectionPeople);
+    }
+
+    function creteCollectionPeople() {
+      window.cPeople = new Collection({
+        type: 'people',
+        default: {
+          name: 'John',
+          age: '12',
+          address: {
+            line1: '93. Meridian place',
+            line2: 'London',
+            postCode: 'E14 9FF'
+          },
+          listKid: 'collectionType_kid'
+        },
+        filter: 'id < 4',
+        callback: addModelToPeople,
+        debug: false
+      });
+    }
+
+    function addModelToPeople() {
+      window.cPeople.add({
+        name: 'John',
+        age: 12,
+        address: {
+          line1: '93. Meridian place',
+          line2: 'London',
+          postCode: 'E14 9FF'
+        },
+        listKid: []
+      }, addListToKidInPeopleCollection);
+    }
+
+    function addListToKidInPeopleCollection() {
+      window.cPeople.JSON[0].listKid.addArray([
+        {
+          name: 'Melissa',
+          age: '6'
+        },
+        {
+          name: 'Adam',
+          age: '5'
+        }
+      ], exportCollections);
+    }
+
+    function exportCollections() {
+      Collection.export(function(dbAsText) {
+        checkResult(dbAsText);
+      });
+    }
+
+    function checkResult(dbAsText) {
+      var dbAsObj = JSON.parse(dbAsText);
+
+      sc.test('collectionType should have "kid" Collection listed.')
+        .check(dbAsObj.collectionType[0].nameCollection)
+        .equalTo('kid');
+
+      sc.test('collectionType should have "people" Collection listed.')
+        .check(dbAsObj.collectionType[1].nameCollection)
+        .equalTo('people');
+
+      var listIdLink = Collection.prototype.pluck(dbAsObj['c_kid'], 'idLink');
+
+      sc.test('Models that are in Sub Collections should be filtered off.')
+        .check(listIdLink.join(''))
+        .equalTo('-1-1');
+
+      sc.test('Sub Collections should be saved in main Collection.')
+        .check(dbAsObj['c_people'][0].listKid.nameCollection)
+        .equalTo('kid');
+
+      cleanUpAfter();
+    }
+
+    function cleanUpAfter() {
+      websql.deleteTable('c_kid', function () {
+        websql.deleteTable('c_people', function () {
+          websql.deleteTable('c_people_address', function () {
+            websql.deleteTable('collectionType', function() {
+              sc.resolve();
+            });
+          });
+        });
+      });
+    }
+  });
+
   scRunner.run('all');
 
 
