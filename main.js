@@ -1254,7 +1254,6 @@ app.controller('AppCtrl', function () {
 
     function startImporting() {
       Collection.import(webSQLAsText, function () {
-        console.log('Done :)');
         loadCollections();
       });
     }
@@ -1269,8 +1268,6 @@ app.controller('AppCtrl', function () {
           age: '6'
         },
         callback: function(cKid) {
-          console.log('cKid', cKid);
-
           cPeople = new Collection({
             type: 'people',
             default: {
@@ -1284,7 +1281,6 @@ app.controller('AppCtrl', function () {
               listKid: 'collectionType(@)kid'
             },
             callback: function(cPeople) {
-              console.log('cPeople', cPeople);
               testImportedCollections(cKid, cPeople);
             }
           });
@@ -1321,14 +1317,30 @@ app.controller('AppCtrl', function () {
                 cPeople.JSON[0].listKid.JSON[1].age +
                 cPeople.JSON[0].listKid.JSON[1].id)
         .equalTo('Melissa63Adam54');
+
+      cleanUpAfter();
     };
+
+    function cleanUpAfter() {
+      websql.deleteTable('c_kid', function () {
+        websql.deleteTable('c_people', function () {
+          websql.deleteTable('c_people_address', function () {
+            websql.deleteTable('collectionType', function () {
+              sc.resolve();
+            });
+          });
+        });
+      });
+    }
   });
 
-  scRunner.run('Export WebSQL to Text');
+//  scRunner.run('Export WebSQL to Text');
+//
+//  setTimeout(function () {
+//    scRunner.run('Import WebSQL from Text');
+//  }, 1000);
 
-  setTimeout(function () {
-    scRunner.run('Import WebSQL from Text');
-  }, 1000);
+  scRunner.run('all');
 
 
   /* ###############
