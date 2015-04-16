@@ -346,7 +346,7 @@ app.controller('AppCtrl', function () {
             line2: 'London',
             postCode: 'E14 9FF'
           },
-          listKid: 'collectionType_kid'
+          listKid: 'collectionType(@)kid'
         },
         filter: 'id < 4',
         callback: addModelToPeople,
@@ -445,7 +445,7 @@ app.controller('AppCtrl', function () {
             line2: 'London',
             postCode: 'E14 9FF'
           },
-          listKid: 'collectionType_kid'
+          listKid: 'collectionType(@)kid'
         },
         callback: addListModelToPeople,
         debug: false
@@ -705,7 +705,7 @@ app.controller('AppCtrl', function () {
             line2: 'London',
             postCode: 'E14 9FF'
           },
-          listKid: 'collectionType_kid'
+          listKid: 'collectionType(@)kid'
         },
         callback: addModelToPeople,
         debug: false
@@ -1161,7 +1161,7 @@ app.controller('AppCtrl', function () {
             line2: 'London',
             postCode: 'E14 9FF'
           },
-          listKid: 'collectionType_kid'
+          listKid: 'collectionType(@)kid'
         },
         filter: 'id < 4',
         callback: addModelToPeople,
@@ -1281,10 +1281,11 @@ app.controller('AppCtrl', function () {
                 line2: 'London',
                 postCode: 'E14 9FF'
               },
-              listKid: 'collectionType_kid'
+              listKid: 'collectionType(@)kid'
             },
             callback: function(cPeople) {
               console.log('cPeople', cPeople);
+              testImportedCollections(cKid, cPeople);
             }
           });
         },
@@ -1292,33 +1293,34 @@ app.controller('AppCtrl', function () {
       });
     }
 
-    function testImportedCollections() {
-      var cKid = new Collection({
-        type: 'kid',
-        default: {
-          name: 'Melissa',
-          age: '6'
-        },
-        callback: function(cKid) {
-          cPeople = new Collection({
-            type: 'people',
-            default: {
-              name: 'John',
-              age: '12',
-              address: {
-                line1: '93. Meridian place',
-                line2: 'London',
-                postCode: 'E14 9FF'
-              },
-              listKid: 'collectionType_kid'
-            },
-            callback: function(cPeople) {
-              console.log('cPeople', cPeople);
-            }
-          });
-        },
-        debug: false
-      });
+    function testImportedCollections(cKid, cPeople) {
+      sc.test('People Collection should have only one element')
+        .check(cPeople.JSON.length)
+        .equalTo(1);
+
+      sc.test('Properties should be restored properly')
+        .check(cPeople.JSON[0].name+cPeople.JSON[0].age+cPeople.JSON[0].id)
+        .equalTo('John121');
+
+      sc.test('Multi-dimensions should be restored properly')
+        .check( cPeople.JSON[0].address.line1 +
+                cPeople.JSON[0].address.line2 +
+                cPeople.JSON[0].address.postCode +
+                cPeople.JSON[0].address.id)
+        .equalTo('93. Meridian placeLondonE14 9FF1');
+
+      sc.test('Sub Collections Should have two Models listed.')
+        .check(cPeople.JSON[0].listKid.JSON.length)
+        .equalTo(2);
+
+      sc.test('Sub Collection Should be restored properly.')
+        .check( cPeople.JSON[0].listKid.JSON[0].name +
+                cPeople.JSON[0].listKid.JSON[0].age +
+                cPeople.JSON[0].listKid.JSON[0].id +
+                cPeople.JSON[0].listKid.JSON[1].name +
+                cPeople.JSON[0].listKid.JSON[1].age +
+                cPeople.JSON[0].listKid.JSON[1].id)
+        .equalTo('Melissa63Adam54');
     };
   });
 
@@ -1524,8 +1526,8 @@ app.controller('AppCtrl', function () {
           line2: 'London',
           postCode: 'E14 9FF'
         },
-        listCar: 'collectionType_car',
-        listKid: 'collectionType_kid'
+        listCar: 'collectionType(@)car',
+        listKid: 'collectionType(@)kid'
       },
       filter: 'id < 4',
       callback: callback,
@@ -1551,8 +1553,8 @@ app.controller('AppCtrl', function () {
           line2: 'London',
           postCode: 'E14 9FF'
         },
-        listCar: 'collectionType_car',
-        listKid: 'collectionType_kid'
+        listCar: 'collectionType(@)car',
+        listKid: 'collectionType(@)kid'
       },
       filter: 'id < 4',
       callback: callback,
