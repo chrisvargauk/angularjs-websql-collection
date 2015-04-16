@@ -1255,8 +1255,71 @@ app.controller('AppCtrl', function () {
     function startImporting() {
       Collection.import(webSQLAsText, function () {
         console.log('Done :)');
+        loadCollections();
       });
     }
+
+    function loadCollections() {
+      var cKid, cPeople;
+
+      cKid = new Collection({
+        type: 'kid',
+        default: {
+          name: 'Melissa',
+          age: '6'
+        },
+        callback: function(cKid) {
+          console.log('cKid', cKid);
+
+          cPeople = new Collection({
+            type: 'people',
+            default: {
+              name: 'John',
+              age: '12',
+              address: {
+                line1: '93. Meridian place',
+                line2: 'London',
+                postCode: 'E14 9FF'
+              },
+              listKid: 'collectionType_kid'
+            },
+            callback: function(cPeople) {
+              console.log('cPeople', cPeople);
+            }
+          });
+        },
+        debug: false
+      });
+    }
+
+    function testImportedCollections() {
+      var cKid = new Collection({
+        type: 'kid',
+        default: {
+          name: 'Melissa',
+          age: '6'
+        },
+        callback: function(cKid) {
+          cPeople = new Collection({
+            type: 'people',
+            default: {
+              name: 'John',
+              age: '12',
+              address: {
+                line1: '93. Meridian place',
+                line2: 'London',
+                postCode: 'E14 9FF'
+              },
+              listKid: 'collectionType_kid'
+            },
+            callback: function(cPeople) {
+              console.log('cPeople', cPeople);
+            }
+          });
+        },
+        debug: false
+      });
+    };
   });
 
   scRunner.run('Export WebSQL to Text');
