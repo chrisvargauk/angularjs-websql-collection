@@ -1335,7 +1335,6 @@ app.controller('AppCtrl', function () {
   });
 
 //  scRunner.run('Export WebSQL to Text');
-//
 //  setTimeout(function () {
 //    scRunner.run('Import WebSQL from Text');
 //  }, 1000);
