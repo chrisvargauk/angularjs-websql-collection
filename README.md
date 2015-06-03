@@ -1,7 +1,13 @@
+As of mid 2015, IndexDB is tempting to use but for mobile applications using web technologies it's just not quite there yet.
+I believe WebSQL is still better for indexed storage, even if it is not a standard anymore.
+The problem is that WebSQL is a relational database and that makes it complicated to work with JSON objects.
+The following Collection implementation makes it easy to use WebSQL with JSON objects.
+The lib takes JSON objects and creates the related tables for you,
+all you need to focus on is to keep adding new object to the collection and the lib takes care of storing those object for later.
+
 <h3>Context</h3>
-Lets say you've created a "user" object. You are happy with the properties and you want to save objects.
+Lets say you've created a "user" object. You are happy with the properties and you want to save it.
 <pre>
-like the following user object.
 var user = {
   name: 'John',
   age: '12'
@@ -9,8 +15,8 @@ var user = {
 </pre>
 
 <h3>Create Collection</h3>
-All you need to do is create a collection and pass in any user object as default.
-This will basically register "user" as a "type" and prepares the DB to receive objects like you've passed as default.
+All you need to do is, create a collection and pass in any user object as default.
+This will basically register "user" as a "type" and prepares the DB to receive objects.
 <pre>
 var cUser = new Collection({
   type: 'user',
