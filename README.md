@@ -47,3 +47,27 @@ You can delete any Model from the Collection by calling removeById method.
 <pre>
 cUser.removeById('step', id);
 </pre>
+
+<h3>Asynchronous Calls</h3>
+Interacting with WebSQL is of course asynchronous, therefore every interaction can have a callback to allow developers to queue these asynchronous calls.
+<pre>
+var callback = function () {
+  console.log('done');
+}
+
+var cUser = new Collection({
+  type: 'user',
+  default: user,
+  callback: callback
+});
+
+cUser.add({
+  name: 'John',
+  age: '12'
+}, callback);
+
+cUser.JSON[0].age = 23;
+cUser.check(callback);
+
+cUser.removeById('step', id, callback);
+</pre>
