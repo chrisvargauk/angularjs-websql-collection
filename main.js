@@ -1,8 +1,5 @@
-var app = angular.module('app', []);
-
-app.controller('AppCtrl', function () {
+angular.module('app', ['WebSQLCollection']).controller('AppCtrl', function (Collection) {
   console.log('Controller loaded');
-
 
   /* collection: create multi-dim collection.
   *  Create table structure according to multi-dimensional obj structure.

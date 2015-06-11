@@ -1,4 +1,4 @@
-As of mid 2015, IndexDB is tempting to use but for mobile applications using web technologies it's just not quite there yet.
+As of mid 2015, IndexDB is tempting to use but for mobile applications - using web technologies - it's just not quite there yet.
 I believe WebSQL is still better for indexed storage, even if it is not a standard anymore.
 The problem is that WebSQL is a relational database and that makes it complicated to work with JSON objects.
 The following Collection implementation makes it easy to use WebSQL with JSON objects.
@@ -70,4 +70,12 @@ cUser.JSON[0].age = 23;
 cUser.check(callback);
 
 cUser.removeById('step', id, callback);
+</pre>
+
+<h3>Access to Collection in Angular</h3>
+<pre>
+Inject Collection constructor function.
+angular.module('myApp', ['WebSQLCollection']).controller('AppCtrl', function (Collection) {
+   ...
+});
 </pre>
