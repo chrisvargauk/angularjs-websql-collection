@@ -73,8 +73,8 @@ cUser.removeById('step', id, callback);
 </pre>
 
 <h3>Access to Collection in Angular</h3>
-<pre>
 Inject Collection constructor function.
+<pre>
 angular.module('myApp', ['WebSQLCollection']).controller('AppCtrl', function (Collection) {
    ...
 });
